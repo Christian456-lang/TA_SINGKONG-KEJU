@@ -1,0 +1,304 @@
+{% extends 'admin_base.html' %}
+
+{% set active_page = 'stock' %}
+
+{% block title %}Stock Inventory{% endblock %}
+
+{% block content %}
+<div class="dashboard-header-row" style="margin-bottom: 20px;">
+    <div class="title-area">
+        <h1>Manajemen Stok Produk</h1>
+        <p>Pantau dan perbarui ketersediaan menu harian Anda.</p>
+    </div>
+</div>
+
+<!-- Stock KPI Cards -->
+<div class="kpi-grid stock-kpi">
+    <div class="kpi-card">
+        <div class="kpi-header">
+            <div class="kpi-icon" style="background-color: #dcedc8; color: #558b2f;"><i class='bx bx-notepad'></i></div>
+            <div class="kpi-content-right">
+                <div class="kpi-label">Total Menu</div>
+                <div class="kpi-value" style="color: var(--text-main); font-size: 20px;">{{ total_menu }} Varian</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-header">
+            <div class="kpi-icon" style="background-color: #ffcdd2; color: #c62828;"><i class='bx bx-error'></i></div>
+            <div class="kpi-content-right">
+                <div class="kpi-label">Stok Rendah</div>
+                <div class="kpi-value" style="color: var(--text-main); font-size: 20px;">{{ low_stock }} Produk</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="kpi-card" style="background-color: var(--primary); color: white; display: flex; align-items: center; justify-content: center; gap: 15px;">
+        <i class='bx bx-transfer-alt' style="font-size: 24px;"></i>
+        <div>
+            <div style="font-size: 11px; opacity: 0.8;">Terakhir Update</div>
+            <div style="font-size: 14px; font-weight: 500;">{{ last_updated_str }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Product List Table -->
+<div class="orders-card">
+    <div class="card-header" style="background-color: var(--bg-sidebar); padding: 15px 24px; margin: -24px -24px 24px -24px; border-radius: 12px 12px 0 0; border-bottom: 1px solid var(--border);">
+        <h2 style="color: var(--text-muted); font-size: 16px;">Daftar Produk</h2>
+        <div class="filter-actions" style="position: relative; display: flex; align-items: center; gap: 10px;">
+            <div class="search-box" style="position: relative;">
+                <i class='bx bx-search' style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+                <input type="text" id="searchInput" onkeyup="searchProduct()" placeholder="Cari nama atau ID..." style="padding: 8px 10px 8px 30px; border-radius: 8px; border: 1px solid var(--border); background-color: var(--bg-card); color: var(--text-main); font-size: 13px; outline: none;">
+            </div>
+            <div class="dropdown">
+                <button class="btn-outline" id="filterBtn" onclick="toggleDropdown()"><i class='bx bx-filter'></i> Filter</button>
+                <div class="dropdown-content" id="filterDropdown">
+                    <a href="#" onclick="filterCategory('all', event)">Semua Kategori</a>
+                    <a href="#" onclick="filterCategory('unggulan', event)">Unggulan</a>
+                    <a href="#" onclick="filterCategory('makanan_berat', event)">Makanan Berat</a>
+                    <a href="#" onclick="filterCategory('makanan_ringan', event)">Makanan Ringan</a>
+                    <a href="#" onclick="filterCategory('minuman', event)">Minuman</a>
+                </div>
+            </div>
+            <button class="btn-outline" onclick="exportPDF()"><i class='bx bxs-file-pdf'></i> Export PDF</button>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="orders-table stock-table">
+            <thead>
+                <tr>
+                    <th>PRODUK</th>
+                    <th>KATEGORI</th>
+                    <th>STOK SAAT INI</th>
+                    <th>STATUS</th>
+                    <th>AKSI</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for menu in menus %}
+                <tr class="product-row" data-group="{{ menu.group }}">
+                    <td>
+                        <div class="product-cell">
+                            {% set bg_url = menu.image if menu.image.startswith('http') else url_for('static', filename='img/' ~ menu.image) %}
+                            <div class="prod-img" style="background-image: url('{{ bg_url }}');"></div>
+                            <div>
+                                <div class="prod-name">{{ menu.name }}</div>
+                                <div class="prod-id">ID: PROD-{{ '%03d' % menu.id }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td><span class="cat-badge">{{ menu.group.replace('_', ' ').title() }}</span></td>
+                    <td class="stock-amount {% if menu.stock < 10 %}text-danger{% endif %}">{{ menu.stock }}</td>
+                    <td>
+                        {% if menu.stock == 0 %}
+                        <span class="stock-status danger"><span class="dot"></span> Habis</span>
+                        {% elif menu.stock < 10 %}
+                        <span class="stock-status warning"><span class="dot"></span> Stok Rendah</span>
+                        {% else %}
+                        <span class="stock-status ok"><span class="dot"></span> Tersedia</span>
+                        {% endif %}
+                    </td>
+                    <td><button class="btn-update" onclick="openStockModal('{{ menu.id }}', '{{ menu.name }}', '{{ menu.stock }}')">Update</button></td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" style="text-align: center;">Belum ada produk</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+
+<!-- Update Stock Modal -->
+<div class="modal-overlay" id="stockModal">
+    <div class="modal-content" style="max-width: 400px; padding: 32px; border-radius: 20px;">
+        <button class="modal-close" onclick="closeStockModal()"><i class='bx bx-x'></i></button>
+        <div class="modal-header">
+            <h2>Update Stok Produk</h2>
+            <p id="modalProductName">Nama Produk</p>
+        </div>
+        
+        <div class="form-group">
+            <label for="newStockInput">Jumlah Stok Baru</label>
+            <div class="input-wrapper">
+                <i class='bx bx-box'></i>
+                <input type="number" id="newStockInput" min="0" placeholder="Masukkan jumlah stok...">
+            </div>
+            <input type="hidden" id="modalProductId">
+        </div>
+
+        <button class="btn-filled btn-block" onclick="submitStockUpdate()">Simpan Perubahan</button>
+    </div>
+</div>
+
+<!-- Custom Toast -->
+<div id="successToast" class="custom-toast">
+    <div class="toast-icon">
+        <i class='bx bx-check'></i>
+    </div>
+    <div class="toast-content">
+        <div class="toast-title">Perubahan Berhasil Disimpan</div>
+        <div class="toast-message">Stok produk telah diperbarui dalam sistem.</div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+<script>
+function exportPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    // Header
+    doc.setFontSize(18);
+    doc.text("Laporan Stok Inventory - Singkong Keju D9", 14, 20);
+    doc.setFontSize(11);
+    doc.setTextColor(100);
+    doc.text("Tanggal: " + new Date().toLocaleDateString('id-ID'), 14, 28);
+    
+    const tableData = [
+        {% for menu in menus %}
+        [
+            "PROD-{{ '%03d' % menu.id }}",
+            {{ menu.name|tojson }},
+            "{{ menu.group.replace('_', ' ').title() }}",
+            "{{ menu.stock }}",
+            "{{ 'Habis' if menu.stock == 0 else ('Stok Rendah' if menu.stock < 10 else 'Tersedia') }}"
+        ],
+        {% endfor %}
+    ];
+    
+    doc.autoTable({
+        startY: 35,
+        head: [['ID Produk', 'Nama Menu', 'Kategori', 'Stok Saat Ini', 'Status']],
+        body: tableData,
+        theme: 'grid',
+        headStyles: { fillColor: [74, 59, 44] },
+        styles: { fontSize: 10 },
+        alternateRowStyles: { fillColor: [249, 246, 240] }
+    });
+    
+    doc.save("laporan_stok_inventory.pdf");
+}
+
+function showToast() {
+    closeStockModal();
+    const toast = document.getElementById('successToast');
+    toast.classList.add('show');
+    setTimeout(() => {
+        toast.classList.remove('show');
+        window.location.reload();
+    }, 2000);
+}
+
+function closeToast() {
+    document.getElementById('successToast').classList.remove('show');
+}
+
+function toggleDropdown() {
+    document.getElementById("filterDropdown").classList.toggle("show");
+}
+
+function filterCategory(category, event) {
+    if(event) event.preventDefault();
+    document.getElementById("filterDropdown").classList.remove("show");
+    document.getElementById("filterDropdown").setAttribute('data-current-filter', category);
+    
+    // Update button text to reflect selected filter
+    let btnText = "Filter";
+    if (category === 'unggulan') btnText = "Unggulan";
+    else if (category === 'makanan_berat') btnText = "Makanan Berat";
+    else if (category === 'makanan_ringan') btnText = "Makanan Ringan";
+    else if (category === 'minuman') btnText = "Minuman";
+    else btnText = "Semua Kategori";
+    
+    document.getElementById("filterBtn").innerHTML = `<i class='bx bx-filter'></i> ${btnText}`;
+    
+    // Trigger search which now handles both
+    searchProduct();
+}
+
+function searchProduct() {
+    let input = document.getElementById("searchInput").value.toLowerCase();
+    let rows = document.querySelectorAll('.product-row');
+    let currentFilter = document.getElementById("filterDropdown").getAttribute('data-current-filter') || 'all';
+
+    let hasVisibleRows = false;
+
+    rows.forEach(row => {
+        let name = row.querySelector(".prod-name").innerText.toLowerCase();
+        let id = row.querySelector(".prod-id").innerText.toLowerCase();
+        let category = row.getAttribute('data-group');
+        
+        let matchesSearch = name.includes(input) || id.includes(input);
+        let matchesFilter = (currentFilter === 'all') || (category === currentFilter);
+
+        if (matchesSearch && matchesFilter) {
+            row.style.display = '';
+            hasVisibleRows = true;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+
+    // Handle empty state row if needed (assuming there's an element with id="emptyRow" if needed)
+}
+
+function openStockModal(id, name, currentStock) {
+    document.getElementById('modalProductId').value = id;
+    document.getElementById('modalProductName').innerText = name;
+    document.getElementById('newStockInput').value = currentStock;
+    document.getElementById('stockModal').classList.add('active');
+}
+
+function closeStockModal() {
+    document.getElementById('stockModal').classList.remove('active');
+}
+
+async function submitStockUpdate() {
+    const id = document.getElementById('modalProductId').value;
+    const stock = document.getElementById('newStockInput').value;
+    
+    if (stock === '') return;
+    
+    try {
+        const response = await fetch(`/api/stock/update/${id}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ stock: parseInt(stock) })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showToast();
+        } else {
+            alert("Gagal mengupdate stok: " + data.message);
+        }
+    } catch (err) {
+        alert("Terjadi kesalahan sistem.");
+    }
+}
+
+// Close the dropdown menu if the user clicks outside of it
+window.onclick = function(event) {
+  if (!event.target.matches('#filterBtn') && !event.target.matches('#filterBtn *')) {
+    var dropdowns = document.getElementsByClassName("dropdown-content");
+    for (var i = 0; i < dropdowns.length; i++) {
+      var openDropdown = dropdowns[i];
+      if (openDropdown.classList.contains('show')) {
+        openDropdown.classList.remove('show');
+      }
+    }
+  }
+}
+</script>
+{% endblock %}

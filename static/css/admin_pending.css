@@ -1,0 +1,187 @@
+/* ─── Pending Payments Section ─── */
+.pending-section {
+    padding: 10px;
+    background-color: #FDFCF7; /* Warm beige background */
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+}
+
+.pending-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 25px;
+}
+
+.pending-title .subtitle {
+    color: #92400e;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.pending-title h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.2rem;
+    color: #1c1917;
+    margin: 0 0 5px 0;
+}
+
+.pending-title p {
+    color: #57534e;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.pending-count {
+    background: #f5f5f4;
+    border: 1px solid #e7e5e4;
+    padding: 8px 16px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: #44403c;
+    font-size: 0.9rem;
+}
+
+.pending-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.pending-card {
+    background: #F6F4EB;
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+    border: 1px solid #e7e5e4;
+}
+
+.pc-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.table-number {
+    background: #854d27;
+    color: #fff;
+    width: 45px;
+    height: 45px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.table-info {
+    flex: 1;
+}
+
+.table-title {
+    font-size: 1.2rem;
+    color: #292524;
+    font-weight: 500;
+    font-family: 'Playfair Display', serif;
+    margin-bottom: 2px;
+}
+
+.order-id {
+    font-size: 0.75rem;
+    color: #78716c;
+}
+
+.status-badges {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.badge {
+    font-size: 0.6rem;
+    font-weight: 800;
+    padding: 4px 8px;
+    border-radius: 4px;
+    letter-spacing: 1px;
+}
+
+.badge-kitchen {
+    background: #fcd34d;
+    color: #92400e;
+}
+.badge-ready {
+    background: #fecdd3;
+    color: #be123c;
+}
+
+.pc-body {
+    flex: 1;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px dashed #d6d3d1;
+}
+
+.pc-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    color: #44403c;
+    margin-bottom: 8px;
+}
+.pc-item span:last-child {
+    font-weight: 600;
+    color: #78716c;
+}
+
+.pc-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.total-bill {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #57534e;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.total-bill .amount {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #854d27;
+}
+
+.btn-process-payment {
+    background: #854d27;
+    color: #fff;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background 0.2s ease;
+}
+
+.btn-process-payment:hover {
+    background: #6b3a1a;
+}

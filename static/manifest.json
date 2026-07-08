@@ -1,0 +1,21 @@
+{
+  "name": "Singkong Keju D9",
+  "short_name": "Singkong D9",
+  "description": "Kelezatan Singkong Asli & Bergizi",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F9F6F0",
+  "theme_color": "#7A6353",
+  "icons": [
+    {
+      "src": "https://placehold.co/192x192/7a6353/fdfbf7?text=D9",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://placehold.co/512x512/7a6353/fdfbf7?text=D9",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Dashboard{% endblock %} | Singkong Keju D9</title>
+    <!-- Modern Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Boxicons -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_subpages.css') }}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <div class="dashboard-layout">
+        
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">Singkong Keju D9</div>
+                <div class="logo-sub">ADMIN TERMINAL</div>
+            </div>
+            
+            {% set active_page = active_page|default('dashboard') %}
+            <nav class="sidebar-nav">
+                <ul>
+                    {% if session.get('role') == 'admin' %}
+                    <li class="{% if active_page == 'dashboard' %}active{% endif %}"><a href="/admin"><i class='bx bxs-dashboard'></i> Dashboard</a></li>
+                    <li class="{% if active_page == 'menu' %}active{% endif %}"><a href="/admin/menu"><i class='bx bx-restaurant'></i> Kelola Menu</a></li>
+                    {% endif %}
+                    
+                    {% if session.get('role') == 'kasir' %}
+                    <li class="{% if active_page == 'kasir' %}active{% endif %}"><a href="/admin/kasir"><i class='bx bx-store-alt'></i> Kasir / POS</a></li>
+                    <li class="{% if active_page == 'pending' %}active{% endif %}"><a href="/admin/pending"><i class='bx bx-hourglass'></i> Pending Payments</a></li>
+                    <li class="{% if active_page == 'orders' %}active{% endif %}"><a href="/admin/orders"><i class='bx bx-receipt'></i> Order History</a></li>
+                    {% endif %}
+                    
+                    {% if session.get('role') == 'admin' %}
+                    <li class="{% if active_page == 'stock' %}active{% endif %}"><a href="/admin/stock"><i class='bx bx-archive'></i> Stock Inventory</a></li>
+                    <li class="{% if active_page == 'orders' %}active{% endif %}"><a href="/admin/orders"><i class='bx bx-receipt'></i> Order History</a></li>
+                    <li class="{% if active_page == 'report' %}active{% endif %}"><a href="/admin/report"><i class='bx bx-file-blank'></i> Laporan</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+            
+            <div class="sidebar-footer">
+                {% if session.get('role') == 'admin' %}
+                <button class="btn-generate-report">Generate Report</button>
+                {% endif %}
+                <div class="admin-profile">
+                    <div class="profile-avatar"></div>
+                    <div class="profile-info">
+                        <span class="profile-name">{{ session.get('username', 'User').title() }}</span>
+                        <span class="profile-role">{{ session.get('role', 'staff').title() }}</span>
+                    </div>
+                    <a href="/logout" class="logout-btn" title="Keluar"><i class='bx bx-log-out'></i></a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            
+            <!-- Top Header -->
+            <header class="top-header">
+                <div class="mobile-menu-toggle">
+                    <button id="sidebar-toggle" class="icon-btn"><i class='bx bx-menu' style="font-size: 24px;"></i></button>
+                    <span class="mobile-title">D9 Admin</span>
+                </div>
+                <div class="search-container" style="display: none;">
+                <div class="header-actions">
+                    <button class="icon-btn"><i class='bx bx-bell'></i></button>
+                    <button class="icon-btn"><i class='bx bx-question-mark'></i></button>
+                </div>
+            </header>
+
+            <!-- Page Body -->
+            <div class="dashboard-body">
+                {% block content %}
+                {% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <!-- Admin Mobile Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const sidebarToggle = document.getElementById('sidebar-toggle');
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.createElement('div');
+            overlay.className = 'admin-overlay';
+            document.body.appendChild(overlay);
+
+            sidebarToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('active');
+                overlay.classList.toggle('active');
+            });
+
+            overlay.addEventListener('click', () => {
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+            });
+        });
+    </script>
+</body>
+</html>

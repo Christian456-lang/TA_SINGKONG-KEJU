@@ -1,0 +1,114 @@
+{% extends 'admin_base.html' %}
+{% set active_page = 'kasir' %}
+
+{% block title %}Kasir / POS{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_kasir.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="pos-container">
+    <!-- Left: Product Grid -->
+    <div class="pos-left">
+        <div class="pos-top-bar" style="display: flex; gap: 15px; margin-bottom: 20px; align-items: center; flex-wrap: wrap;">
+            <div class="pos-search" style="flex: 1; min-width: 250px; position: relative;">
+                <i class='bx bx-search' style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #78716c; font-size: 1.2rem;"></i>
+                <input type="text" id="pos-search-input" placeholder="Cari nama menu..." style="width: 100%; padding: 10px 15px 10px 45px; border-radius: 20px; border: 1px solid #d6d3d1; font-size: 0.95rem; outline: none; transition: border-color 0.2s;">
+            </div>
+            <div class="pos-filters" style="margin-bottom: 0;">
+                <button class="filter-btn active" data-category="all">Semua</button>
+                <button class="filter-btn" data-category="unggulan">Unggulan</button>
+                <button class="filter-btn" data-category="makanan_berat">Makanan Berat</button>
+                <button class="filter-btn" data-category="makanan_ringan">Makanan Ringan</button>
+                <button class="filter-btn" data-category="minuman">Minuman</button>
+            </div>
+        </div>
+        <div class="pos-product-grid" id="product-grid">
+            {% for menu in menus %}
+            <div class="pos-product-card {% if menu.stock <= 0 %}out-of-stock{% endif %}" 
+                 data-category="{{ menu.group }}" 
+                 data-id="{{ menu.id }}" 
+                 data-name="{{ menu.name }}" 
+                 data-price="{{ menu.price }}" 
+                 data-stock="{{ menu.stock }}">
+                 
+                {% set bg_url = menu.image if menu.image.startswith('http') else url_for('static', filename='img/' ~ menu.image) %}
+                <div class="pos-product-img" style="background-image: url('{{ bg_url }}');">
+                    {% if menu.stock <= 0 %}
+                    <div class="out-of-stock-overlay">HABIS</div>
+                    {% else %}
+                    <div class="stock-badge">{{ menu.stock }}</div>
+                    {% endif %}
+                </div>
+                <div class="pos-product-info">
+                    <div class="pos-product-name">{{ menu.name }}</div>
+                    <div class="pos-product-price">Rp {{ "{:,.0f}".format(menu.price).replace(',', '.') }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Right: Order Summary (Cart) -->
+    <div class="pos-right">
+        <div class="cart-header">
+            <h3>Pesanan Saat Ini</h3>
+            <button id="btn-clear-cart" class="btn-clear"><i class='bx bx-trash'></i> Kosongkan</button>
+        </div>
+        
+        <div class="cart-items-container">
+            <div class="cart-items" id="pos-cart-items">
+                <div class="empty-cart-msg">Keranjang kosong, silakan pilih menu.</div>
+            </div>
+        </div>
+        
+        <div class="cart-customer-info">
+            <div class="form-group-row">
+                <div class="form-group">
+                    <label>No. Meja</label>
+                    <input type="text" id="pos-table" placeholder="Ex: 4" class="form-control">
+                </div>
+                <div class="form-group flex-2">
+                    <label>Nama Customer</label>
+                    <input type="text" id="pos-customer" placeholder="Opsional" class="form-control">
+                </div>
+            </div>
+        </div>
+
+        <div class="cart-summary">
+            <div class="summary-row">
+                <span>Subtotal</span>
+                <span id="pos-subtotal">Rp 0</span>
+            </div>
+            <div class="summary-row">
+                <span>Pajak (10%)</span>
+                <span id="pos-tax">Rp 0</span>
+            </div>
+            <div class="summary-row total">
+                <span>Total</span>
+                <span id="pos-total">Rp 0</span>
+            </div>
+        </div>
+
+        <div class="cart-payment">
+            <label>Metode Pembayaran</label>
+            <div class="payment-methods">
+                <button class="pay-btn active" data-method="tunai"><i class='bx bx-money'></i> Tunai</button>
+                <button class="pay-btn" data-method="qris"><i class='bx bx-qr-scan'></i> QRIS</button>
+                <button class="pay-btn" data-method="transfer"><i class='bx bx-credit-card'></i> Transfer</button>
+            </div>
+        </div>
+
+        <button id="btn-checkout" class="btn-checkout" disabled>
+            <i class='bx bx-check-circle'></i> Proses Pesanan
+        </button>
+    </div>
+</div>
+
+
+<script type="text/javascript"
+  src="{% if midtrans_is_production %}https://app.midtrans.com/snap/snap.js{% else %}https://app.sandbox.midtrans.com/snap/snap.js{% endif %}"
+  data-client-key="{{ midtrans_client_key }}"></script>
+<script src="{{ url_for('static', filename='js/admin_kasir.js') }}?v=1.2"></script>
+{% endblock %}

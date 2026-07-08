@@ -1,0 +1,57 @@
+{% extends 'admin_base.html' %}
+
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_pending.css') }}">
+
+<div class="pending-section">
+    <div class="pending-header">
+        <div class="pending-title">
+            <span class="subtitle">CASHIER DESK</span>
+            <h2>Pending Payments</h2>
+            <p>Manage and process active orders at your terminal.</p>
+        </div>
+        <div class="pending-count">
+            <i class='bx bx-hourglass'></i> <span id="pending-count-text">{{ pending_orders|length }} Orders
+                Pending</span>
+        </div>
+    </div>
+
+    <div class="pending-grid">
+        {% for order in pending_orders %}
+        <div class="pending-card" id="pending-order-{{ order.order_id }}">
+            <div class="pc-header">
+                <div class="table-number">{{ order.table_number }}</div>
+                <div class="table-info">
+                    <div class="table-title">Meja {{ order.table_number }}</div>
+                    <div class="order-id">Order {{ order.order_id }} &bull; {{ order.date.strftime('%H:%M') }}</div>
+                </div>
+                <div class="status-badges">
+                    <span class="badge badge-kitchen">KITCHEN</span>
+                    <span class="badge badge-ready">READY</span>
+                </div>
+            </div>
+            <div class="pc-body">
+                {% set items = order.product_summary.split(',') %}
+                {% for item in items %}
+                <div class="pc-item">
+                    <span>{{ item.split(' (x')[0].strip() }}</span>
+                    <span>x{{ item.split(' (x')[1].replace(')', '') if ' (x' in item else '1' }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="pc-footer">
+                <div class="total-bill">
+                    <span>Total Bill <small style="font-size: 0.65rem; color: #a8a29e;">(Inc. 10% Tax)</small></span>
+                    <span class="amount">Rp {{ "{:,.0f}".format(order.total_amount).replace(',', '.') }}</span>
+                </div>
+                <button class="btn-process-payment" data-orderid="{{ order.order_id }}">
+                    <i class='bx bx-money'></i> PROSES PEMBAYARAN
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/admin_pending.js') }}?v=1.2"></script>
+{% endblock %}

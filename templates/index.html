@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Singkong Keju D9 | Kelezatan Singkong Asli & Bergizi</title>
+    <!-- Modern Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <!-- Boxicons for icons -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <meta name="theme-color" content="#7A6353">
+</head>
+
+<body>
+
+    <!-- Header / Navbar -->
+    <header class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <a href="/">Singkong Keju D9</a>
+            </div>
+
+
+            <div class="nav-actions">
+                <div class="search-bar" id="search-container">
+                    <i class='bx bx-search'></i>
+                    <input type="text" id="search-input" placeholder="Cari kelezatan..." autocomplete="off">
+                    <button class="search-clear" id="search-clear" style="display:none;"><i
+                            class='bx bx-x'></i></button>
+
+                    <!-- Search Results Dropdown -->
+                    <div class="search-results" id="search-results">
+                        <div class="search-results-header">
+                            <span id="search-count">0 hasil ditemukan</span>
+                        </div>
+                        <div class="search-results-list" id="search-results-list">
+                            <!-- Results will be injected here -->
+                        </div>
+                        <div class="search-no-result" id="search-no-result" style="display:none;">
+                            <i class='bx bx-search-alt-2'></i>
+                            <p>Menu tidak ditemukan</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Admin/Cashier Login Button -->
+                <button class="btn-masuk" id="btn-login" aria-label="Login Admin/Kasir">Masuk</button>
+
+                <div class="cart-icon" id="cart-toggle">
+                    <i class='bx bx-shopping-bag'></i>
+                    <span class="cart-count" id="cart-count">0</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+
+        <!-- Category Section -->
+        <section class="categories">
+            <h2>Koleksi <i>Kelezatan</i></h2>
+            <div class="divider"></div>
+
+            <div class="category-grid">
+                <div class="category-card active" data-target="unggulan">
+                    <i class='bx bxs-crown'></i>
+                    <h3>Unggulan</h3>
+                    <p>Menu favorit pilihan pelanggan</p>
+                </div>
+                <div class="category-card" data-target="makanan-berat">
+                    <i class='bx bx-restaurant'></i>
+                    <h3>Makanan Berat</h3>
+                    <p>Goreng, kukus, dan kreasi unik</p>
+                </div>
+                <div class="category-card" data-target="makanan-ringan">
+                    <i class='bx bx-croissant'></i>
+                    <h3>Makanan Ringan</h3>
+                    <p>Getuk, Prol Tape, dan jajanan pasar</p>
+                </div>
+                <div class="category-card" data-target="minuman">
+                    <i class='bx bx-coffee'></i>
+                    <h3>Minuman</h3>
+                    <p>Minuman segar teman bersantai</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- Menu Unggulan Section                              -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <section class="products menu-section" id="unggulan">
+            <div class="section-header">
+                <div class="header-text">
+                    <h2><i class='bx bxs-crown'></i> Menu Unggulan Kami</h2>
+                    <p>Produk favorit keluarga Indonesia.</p>
+                </div>
+            </div>
+
+            <div class="product-grid">
+                {% for product in unggulan %}
+                <div class="product-card">
+                    <div class="product-image" style="background-image: url('{{ product.image }}')">
+                        <button class="btn-favorite"><i class='bx bx-heart'></i></button>
+                    </div>
+                    <div class="product-info">
+                        <span class="product-category">{{ product.category }}</span>
+                        <h3 class="product-name">{{ product.name }}</h3>
+                        <div class="product-rating">
+                            <div class="stars">
+                                <i class='bx bxs-star'></i>
+                                <i class='bx bxs-star'></i>
+                                <i class='bx bxs-star'></i>
+                                <i class='bx bxs-star'></i>
+                                <i class='bx bxs-star-half'></i>
+                            </div>
+                            <span class="reviews">({{ product.reviews }})</span>
+                        </div>
+                        <div class="product-footer">
+                            <span class="product-price">Rp {{ "{:,.0f}".format(product.price).replace(',', '.')
+                                }}</span>
+                            <div class="qty-control" data-id="{{ product.id }}" data-name="{{ product.name }}"
+                                data-price="{{ product.price }}" data-category="{{ product.category }}" data-stock="{{ product.stock }}">
+                                <button class="btn-buy"><i class='bx bx-cart-add'></i> Beli</button>
+                                <div class="qty-stepper" style="display:none;">
+                                    <button class="qty-btn qty-minus"><i class='bx bx-minus'></i></button>
+                                    <span class="qty-value">1</span>
+                                    <button class="qty-btn qty-plus"><i class='bx bx-plus'></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- Makanan Berat Section                              -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <section class="products menu-section" id="makanan-berat">
+            <div class="section-header">
+                <div class="header-text">
+                    <h2><i class='bx bx-restaurant'></i> Makanan Berat</h2>
+                    <p>Sajian utama yang mengenyangkan dan penuh cita rasa.</p>
+                </div>
+            </div>
+
+            <div class="product-grid">
+                {% for product in makanan_berat %}
+                <div class="product-card">
+                    <div class="product-image" style="background-image: url('{{ product.image }}')">
+                        <button class="btn-favorite"><i class='bx bx-heart'></i></button>
+                    </div>
+                    <div class="product-info">
+                        <span class="product-category">{{ product.category }}</span>
+                        <h3 class="product-name">{{ product.name }}</h3>
+                        <p class="product-desc">{{ product.description }}</p>
+                        <div class="product-footer">
+                            <span class="product-price">Rp {{ "{:,.0f}".format(product.price).replace(',', '.')
+                                }}</span>
+                            <div class="qty-control" data-id="{{ product.id }}" data-name="{{ product.name }}"
+                                data-price="{{ product.price }}" data-category="{{ product.category }}" data-stock="{{ product.stock }}">
+                                <button class="btn-buy"><i class='bx bx-cart-add'></i> Beli</button>
+                                <div class="qty-stepper" style="display:none;">
+                                    <button class="qty-btn qty-minus"><i class='bx bx-minus'></i></button>
+                                    <span class="qty-value">1</span>
+                                    <button class="qty-btn qty-plus"><i class='bx bx-plus'></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- Makanan Ringan Section                             -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <section class="products menu-section" id="makanan-ringan">
+            <div class="section-header">
+                <div class="header-text">
+                    <h2><i class='bx bx-croissant'></i> Makanan Ringan</h2>
+                    <p>Camilan lezat teman santai bersama keluarga.</p>
+                </div>
+            </div>
+
+            <div class="product-grid">
+                {% for product in makanan_ringan %}
+                <div class="product-card">
+                    <div class="product-image" style="background-image: url('{{ product.image }}')">
+                        <button class="btn-favorite"><i class='bx bx-heart'></i></button>
+                    </div>
+                    <div class="product-info">
+                        <span class="product-category">{{ product.category }}</span>
+                        <h3 class="product-name">{{ product.name }}</h3>
+                        <p class="product-desc">{{ product.description }}</p>
+                        <div class="product-footer">
+                            <span class="product-price">Rp {{ "{:,.0f}".format(product.price).replace(',', '.')
+                                }}</span>
+                            <div class="qty-control" data-id="{{ product.id }}" data-name="{{ product.name }}"
+                                data-price="{{ product.price }}" data-category="{{ product.category }}" data-stock="{{ product.stock }}">
+                                <button class="btn-buy"><i class='bx bx-cart-add'></i> Beli</button>
+                                <div class="qty-stepper" style="display:none;">
+                                    <button class="qty-btn qty-minus"><i class='bx bx-minus'></i></button>
+                                    <span class="qty-value">1</span>
+                                    <button class="qty-btn qty-plus"><i class='bx bx-plus'></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════ -->
+        <!-- Minuman Section                                    -->
+        <!-- ═══════════════════════════════════════════════════ -->
+        <section class="products menu-section" id="minuman">
+            <div class="section-header">
+                <div class="header-text">
+                    <h2><i class='bx bx-coffee'></i> Minuman</h2>
+                    <p>Minuman segar dan hangat untuk menemani santap Anda.</p>
+                </div>
+            </div>
+
+            <div class="product-grid">
+                {% for product in minuman %}
+                <div class="product-card">
+                    <div class="product-image" style="background-image: url('{{ product.image }}')">
+                        <button class="btn-favorite"><i class='bx bx-heart'></i></button>
+                    </div>
+                    <div class="product-info">
+                        <span class="product-category">{{ product.category }}</span>
+                        <h3 class="product-name">{{ product.name }}</h3>
+                        <p class="product-desc">{{ product.description }}</p>
+                        <div class="product-footer">
+                            <span class="product-price">Rp {{ "{:,.0f}".format(product.price).replace(',', '.')
+                                }}</span>
+                            <div class="qty-control" data-id="{{ product.id }}" data-name="{{ product.name }}"
+                                data-price="{{ product.price }}" data-category="{{ product.category }}" data-stock="{{ product.stock }}">
+                                <button class="btn-buy"><i class='bx bx-cart-add'></i> Beli</button>
+                                <div class="qty-stepper" style="display:none;">
+                                    <button class="qty-btn qty-minus"><i class='bx bx-minus'></i></button>
+                                    <span class="qty-value">1</span>
+                                    <button class="qty-btn qty-plus"><i class='bx bx-plus'></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Bottom Navigation Bar (Mobile) -->
+    <nav class="bottom-nav">
+        <a href="#" class="nav-item active">
+            <i class='bx bx-home-alt'></i>
+            <span>Beranda</span>
+        </a>
+        <a href="#unggulan" class="nav-item">
+            <i class='bx bx-category'></i>
+            <span>Menu</span>
+        </a>
+        <a href="#" class="nav-item" onclick="document.getElementById('search-input').focus()">
+            <i class='bx bx-search'></i>
+            <span>Cari</span>
+        </a>
+        <a href="#" class="nav-item" id="mobile-cart-toggle">
+            <div class="nav-icon-badge">
+                <i class='bx bx-shopping-bag'></i>
+                <span class="cart-count-badge" id="mobile-cart-count">0</span>
+            </div>
+            <span>Keranjang</span>
+        </a>
+    </nav>
+
+    <!-- Overlay & Modals -->
+    <div class="overlay" id="overlay"></div>
+    <div class="cart-overlay" id="cart-overlay"></div>
+
+    <!-- Cart Full Page -->
+    <div class="cart-fullpage" id="cart-sidebar">
+        <div class="cart-container">
+            <!-- Left Column: Items & Form -->
+            <div class="cart-left">
+                <div class="cart-left-header">
+                    <button class="cart-back" id="cart-close"><i class='bx bx-arrow-back'></i></button>
+                    <h2><i>Your Tray</i></h2>
+                </div>
+
+                <div class="cart-left-body" id="cart-body">
+                    <!-- Empty state -->
+                    <div class="cart-empty" id="cart-empty">
+                        <i class='bx bx-shopping-bag'></i>
+                        <h3>Tray Anda Kosong</h3>
+                        <p>Tambahkan menu favorit Anda ke dalam tray</p>
+                    </div>
+
+                    <!-- Cart items list -->
+                    <div class="cart-items" id="cart-items" style="display:none;"></div>
+                </div>
+
+                <!-- Order form -->
+                <div class="cart-form" id="cart-form" style="display:none;">
+                    <div class="cart-form-group">
+                        <label><i class='bx bx-table'></i> Nomor Meja</label>
+                        <input type="number" id="input-meja" placeholder="Contoh: 8" min="1" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                        <small>*Pastikan nomor meja sudah benar untuk penyajian.</small>
+                    </div>
+                    <div class="cart-form-group">
+                        <label><i class='bx bx-user'></i> Nama Customer</label>
+                        <input type="text" id="input-nama" placeholder="Masukkan nama Anda">
+                        <small>*Nama untuk panggilan pesanan.</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Order Summary -->
+            <div class="cart-right" id="cart-summary" style="display:none;">
+                <div class="cart-summary-card">
+                    <h3>Order Summary</h3>
+                    <div class="summary-row">
+                        <span>Subtotal</span>
+                        <span id="summary-subtotal">Rp 0</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Service Tax (10%)</span>
+                        <span id="summary-tax">Rp 0</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Round Up</span>
+                        <span>Rp 0</span>
+                    </div>
+                    <div class="summary-row total">
+                        <span>Total</span>
+                        <span id="summary-total">Rp 0</span>
+                    </div>
+
+                    <div class="payment-methods">
+                        <label>Metode Pembayaran</label>
+                        <div class="payment-options">
+                            <div class="payment-option active" data-method="tunai">
+                                <i class='bx bx-wallet'></i>
+                                <span>Tunai</span>
+                            </div>
+                            <div class="payment-option" data-method="qris">
+                                <i class='bx bx-qr-scan'></i>
+                                <span>QRIS</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn-checkout" id="btn-checkout">
+                        <i class='bx bx-check-circle'></i> Bayar Sekarang
+                    </button>
+                    <button class="btn-add-more" id="btn-add-more">
+                        Tambahkan Item Lagi
+                    </button>
+
+                    <div class="cart-disclaimer">
+                        <i class='bx bx-info-circle'></i>
+                        <p>Dengan melakukan pemesanan, Anda menyetujui ketentuan layanan kami. Pesanan akan langsung
+                            dikirim ke dapur.</p>
+                    </div>
+
+                    <div class="dine-in-badge">
+                        <i class='bx bx-restaurant'></i>
+                        <div>
+                            <strong>Dine-in Order</strong>
+                            <small>Estimated wait: 15-20 mins</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div class="modal-overlay" id="login-modal">
+        <div class="modal-content">
+            <button class="modal-close" id="btn-close-modal"><i class='bx bx-x'></i></button>
+            <div class="modal-header">
+                <h2>Akses Pegawai</h2>
+                <p>Silakan masukkan password untuk admin dan kasir.</p>
+            </div>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <div class="input-wrapper">
+                        <i class='bx bx-user'></i>
+                        <input type="text" id="username" name="username" placeholder="Masukkan username..." required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="input-wrapper">
+                        <i class='bx bx-lock-alt'></i>
+                        <input type="password" id="password" name="password" placeholder="Masukkan password..."
+                            required>
+                        <button type="button" class="toggle-password" id="btn-toggle-password"><i
+                                class='bx bx-hide'></i></button>
+                    </div>
+                </div>
+                <div class="form-error" id="login-error"></div>
+                <button type="submit" class="btn btn-primary btn-block">Masuk ke Sistem</button>
+            </form>
+        </div>
+    </div>
+
+    <script type="text/javascript"
+      src="{% if midtrans_is_production %}https://app.midtrans.com/snap/snap.js{% else %}https://app.sandbox.midtrans.com/snap/snap.js{% endif %}"
+      data-client-key="{{ midtrans_client_key }}"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+
+</html>

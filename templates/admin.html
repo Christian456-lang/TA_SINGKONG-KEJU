@@ -1,0 +1,141 @@
+{% extends 'admin_base.html' %}
+
+{% set active_page = 'dashboard' %}
+
+{% block title %}Dashboard Overview{% endblock %}
+
+{% block content %}
+<div class="dashboard-header-row">
+    <div class="title-area">
+        <h1>Dashboard Overview</h1>
+        <p>Monitor your daily operations and performance metrics.</p>
+    </div>
+    <div class="filter-actions">
+        <button class="btn-outline"><i class='bx bx-calendar'></i> Last 24 Hours</button>
+        <button class="btn-filled"><i class='bx bx-filter-alt'></i> Filters</button>
+    </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="kpi-grid">
+    <div class="kpi-card">
+        <div class="kpi-header">
+            <div class="kpi-icon"><i class='bx bx-wallet'></i></div>
+            <span class="kpi-trend positive">Real Time</span>
+        </div>
+        <div class="kpi-label">Total Sales Today</div>
+        <div class="kpi-value">{{ total_sales_today | rupiah }}</div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-header">
+            <div class="kpi-icon"><i class='bx bx-cart'></i></div>
+            <span class="kpi-trend positive">Total</span>
+        </div>
+        <div class="kpi-label">Total Orders</div>
+        <div class="kpi-value">{{ total_orders }} Orders</div>
+    </div>
+
+    <div class="kpi-card alert-card">
+        <div class="kpi-header">
+            <div class="kpi-icon"><i class='bx bx-box'></i></div>
+            <a href="/admin/stock" class="kpi-link">View Details <i class='bx bx-chevron-right'></i></a>
+        </div>
+        <div class="kpi-label">Low Stock Items</div>
+        <div class="kpi-value alert-text">{{ low_stock }} Skus</div>
+    </div>
+</div>
+
+<!-- Charts & Popular Products Row -->
+<div class="middle-grid">
+    
+    <!-- Sales Performance Chart (Mockup) -->
+    <div class="chart-card">
+        <div class="card-header">
+            <h2>Sales Performance (Last 7 Days)</h2>
+            <div class="chart-legend">
+                <span class="legend-item"><span class="dot sales"></span> Sales</span>
+            </div>
+        </div>
+        <div class="bar-chart">
+            {% for day in daily_sales %}
+            <div class="bar-col" title="{{ day.sales | rupiah }}">
+                <div class="bar-bg" style="height: 100%;">
+                    <div class="bar-fill" style="height: {{ day.height }}%;"></div>
+                </div>
+                <div class="bar-label">{{ day.day }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Popular Products -->
+    <div class="popular-card">
+        <h2>Popular Products</h2>
+        <div class="popular-list">
+            {% if popular_products %}
+                {% for item in popular_products %}
+                <div class="popular-item">
+                    <div class="item-img" style="background-image: url('{{ item.image if item.image.startswith('http') else url_for('static', filename='img/' + item.image) }}');"></div>
+                    <div class="item-details">
+                        <div class="item-name">{{ item.name }}</div>
+                        <div class="item-sub">Popular Item</div>
+                    </div>
+                    <div class="item-stats">
+                        <div class="item-price">{{ item.price | rupiah }}</div>
+                        <div class="item-sold">{{ item.reviews }} reviews</div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="popular-item">
+                    <p>Belum ada produk terpopuler</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+<!-- Recent Orders Table -->
+<div class="orders-card">
+    <div class="card-header">
+        <h2>Recent Orders</h2>
+        <a href="/admin/orders" class="view-history">View Order History <i class='bx bx-link-external'></i></a>
+    </div>
+    <div class="table-responsive">
+        <table class="orders-table">
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Nomor Meja</th>
+                    <th>Product</th>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if recent_orders %}
+                    {% for order in recent_orders %}
+                    <tr>
+                        <td class="order-id">{{ order.order_id }}</td>
+                        <td><span class="badge-meja {% if order.table_category == 'VIP' %}soft-red{% else %}soft-gray{% endif %}"><i class='bx bx-restaurant'></i> Meja {{ order.table_number }}</span></td>
+                        <td>{{ order.product_summary }}</td>
+                        <td class="order-date">{{ order.date.strftime('%d %b, %H:%M') }}</td>
+                        <td class="order-amount">{{ order.total_amount | rupiah }}</td>
+                        <td><span class="status-badge {% if order.status == 'Completed' %}success{% elif order.status == 'Pending' %}pending{% else %}danger{% endif %}">{{ order.status }}</span></td>
+                        <td class="action-cell"><button class="btn-more"><i class='bx bx-dots-vertical-rounded'></i></button></td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7" style="text-align: center;">Belum ada pesanan</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

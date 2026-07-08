@@ -1,0 +1,234 @@
+{% extends 'admin_base.html' %}
+
+{% set active_page = 'menu' %}
+
+{% block title %}Menu Management{% endblock %}
+
+{% block content %}
+<div class="dashboard-header-row" style="margin-bottom: 20px;">
+    <div class="title-area">
+        <h1>Manajemen Menu</h1>
+        <p>Tambahkan, perbarui, atau hapus item menu dari katalog Anda.</p>
+    </div>
+</div>
+
+<!-- Product List Table -->
+<div class="orders-card">
+    <div class="card-header" style="background-color: var(--bg-sidebar); padding: 15px 24px; margin: -24px -24px 24px -24px; border-radius: 12px 12px 0 0; border-bottom: 1px solid var(--border);">
+        <h2 style="color: var(--text-muted); font-size: 16px;">Daftar Menu</h2>
+        <div class="filter-actions" style="position: relative; display: flex; align-items: center; gap: 10px;">
+            <div class="search-box" style="position: relative;">
+                <i class='bx bx-search' style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+                <input type="text" id="searchInput" onkeyup="searchProduct()" placeholder="Cari nama menu..." style="padding: 8px 10px 8px 30px; border-radius: 8px; border: 1px solid var(--border); background-color: var(--bg-card); color: var(--text-main); font-size: 13px; outline: none;">
+            </div>
+            <button class="btn-filled" onclick="openMenuModal()"><i class='bx bx-plus'></i> Tambah Menu</button>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="orders-table stock-table">
+            <thead>
+                <tr>
+                    <th>PRODUK</th>
+                    <th>KATEGORI</th>
+                    <th>HARGA</th>
+                    <th>STOK</th>
+                    <th>AKSI</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for menu in menus %}
+                <tr class="product-row" data-group="{{ menu.group }}">
+                    <td>
+                        <div class="product-cell">
+                            {% set bg_url = menu.image if menu.image.startswith('http') else url_for('static', filename='img/' ~ menu.image) %}
+                            <div class="prod-img" style="background-image: url('{{ bg_url }}');"></div>
+                            <div>
+                                <div class="prod-name">{{ menu.name }}</div>
+                                <div class="prod-id" style="font-size: 11px; opacity: 0.7;">{{ menu.description[:30] if menu.description else '' }}...</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td><span class="cat-badge">{{ menu.group.replace('_', ' ').title() }}</span></td>
+                    <td>Rp {{ "{:,.0f}".format(menu.price).replace(',', '.') }}</td>
+                    <td>{{ menu.stock }}</td>
+                    <td>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn-update" style="padding: 6px 12px; background: #e3f2fd; color: #1565c0;" onclick="openMenuModal('{{ menu.id }}', '{{ menu.name|escape }}', '{{ menu.group }}', '{{ menu.category }}', '{{ menu.price }}', '{{ menu.stock }}', '{{ menu.description|escape if menu.description else '' }}')"><i class='bx bx-edit'></i> Edit</button>
+                            <button class="btn-update" style="padding: 6px 12px; background: #ffebee; color: #c62828;" onclick="deleteMenu('{{ menu.id }}')"><i class='bx bx-trash'></i> Hapus</button>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 30px;">Belum ada menu terdaftar</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Menu Form Modal -->
+<div class="modal-overlay" id="menuModal">
+    <div class="modal-content" style="max-width: 500px; padding: 32px; border-radius: 20px;">
+        <button class="modal-close" onclick="closeMenuModal()"><i class='bx bx-x'></i></button>
+        <div class="modal-header">
+            <h2 id="modalTitle">Tambah Menu Baru</h2>
+        </div>
+        
+        <form id="menuForm" onsubmit="submitMenuForm(event)">
+            <input type="hidden" id="menuId">
+            
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label>Nama Menu</label>
+                <div class="input-wrapper">
+                    <input type="text" id="menuName" required placeholder="Masukkan nama menu">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                <div class="form-group">
+                    <label>Grup Menu</label>
+                    <select id="menuGroup" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main);">
+                        <option value="unggulan">Unggulan</option>
+                        <option value="makanan_berat">Makanan Berat</option>
+                        <option value="makanan_ringan">Makanan Ringan</option>
+                        <option value="minuman">Minuman</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Kategori Label</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="menuCategory" required placeholder="Contoh: OLAHAN SINGKONG">
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                <div class="form-group">
+                    <label>Harga (Rp)</label>
+                    <div class="input-wrapper">
+                        <input type="number" id="menuPrice" required min="0" placeholder="0">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Stok Awal</label>
+                    <div class="input-wrapper">
+                        <input type="number" id="menuStock" required min="0" value="100">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label>Deskripsi Singkat</label>
+                <div class="input-wrapper">
+                    <input type="text" id="menuDesc" placeholder="Deskripsi menu...">
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 25px;">
+                <label>Gambar Produk</label>
+                <div class="input-wrapper" style="padding: 10px; border: 1px dashed var(--border); text-align: center;">
+                    <input type="file" id="menuImage" accept="image/*">
+                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 5px;">Biarkan kosong jika tidak ingin mengubah gambar (untuk Edit)</div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-filled btn-block" id="submitBtn">Simpan Menu</button>
+        </form>
+    </div>
+</div>
+
+<script>
+function searchProduct() {
+    let input = document.getElementById("searchInput").value.toLowerCase();
+    let rows = document.querySelectorAll('.product-row');
+    rows.forEach(row => {
+        let name = row.querySelector(".prod-name").innerText.toLowerCase();
+        row.style.display = name.includes(input) ? '' : 'none';
+    });
+}
+
+function openMenuModal(id='', name='', group='unggulan', category='', price='', stock='100', desc='') {
+    document.getElementById('menuId').value = id;
+    document.getElementById('menuName').value = name;
+    document.getElementById('menuGroup').value = group;
+    document.getElementById('menuCategory').value = category;
+    document.getElementById('menuPrice').value = price;
+    document.getElementById('menuStock').value = stock;
+    document.getElementById('menuDesc').value = desc;
+    document.getElementById('menuImage').value = '';
+    
+    document.getElementById('modalTitle').innerText = id ? 'Edit Menu' : 'Tambah Menu Baru';
+    document.getElementById('submitBtn').innerHTML = id ? 'Simpan Perubahan' : 'Tambah Menu';
+    
+    document.getElementById('menuImage').required = id ? false : true;
+
+    document.getElementById('menuModal').classList.add('active');
+}
+
+function closeMenuModal() {
+    document.getElementById('menuModal').classList.remove('active');
+}
+
+async function submitMenuForm(e) {
+    e.preventDefault();
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.innerHTML = "Menyimpan... <i class='bx bx-loader-alt bx-spin'></i>";
+    
+    const id = document.getElementById('menuId').value;
+    const formData = new FormData();
+    formData.append('name', document.getElementById('menuName').value);
+    formData.append('group', document.getElementById('menuGroup').value);
+    formData.append('category', document.getElementById('menuCategory').value);
+    formData.append('price', document.getElementById('menuPrice').value);
+    formData.append('stock', document.getElementById('menuStock').value);
+    formData.append('description', document.getElementById('menuDesc').value);
+    
+    const imageFile = document.getElementById('menuImage').files[0];
+    if (imageFile) {
+        formData.append('image', imageFile);
+    }
+
+    const url = id ? `/api/menu/update/${id}` : '/api/menu/add';
+    
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            body: formData
+        });
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('Menu berhasil ' + (id ? 'diperbarui!' : 'ditambahkan!'));
+            window.location.reload();
+        } else {
+            alert('Gagal: ' + data.message);
+            btn.disabled = false;
+            btn.innerHTML = id ? 'Simpan Perubahan' : 'Tambah Menu';
+        }
+    } catch (error) {
+        alert('Terjadi kesalahan jaringan.');
+        btn.disabled = false;
+        btn.innerHTML = id ? 'Simpan Perubahan' : 'Tambah Menu';
+    }
+}
+
+async function deleteMenu(id) {
+    if(!confirm("Anda yakin ingin menghapus menu ini?")) return;
+    
+    try {
+        const response = await fetch(`/api/menu/delete/${id}`, { method: 'DELETE' });
+        const data = await response.json();
+        if(data.success) {
+            window.location.reload();
+        } else {
+            alert('Gagal menghapus: ' + data.message);
+        }
+    } catch(err) {
+        alert('Terjadi kesalahan.');
+    }
+}
+</script>
+{% endblock %}
