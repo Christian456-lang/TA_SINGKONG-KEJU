@@ -418,6 +418,24 @@
         </div>
     </div>
 
+    <!-- Pending Payment Modal -->
+    <div class="modal-overlay" id="pending-payment-modal">
+        <div class="modal-content" style="text-align: center; padding: 2rem;">
+            <div id="pending-modal-icon">
+                <i class='bx bx-time-five bx-spin' style='font-size: 4rem; color: #d97706;'></i>
+            </div>
+            <div class="modal-header" style="text-align: center; margin-bottom: 0;">
+                <h2 style="margin-top: 1rem;" id="pending-modal-title">Menunggu Pembayaran</h2>
+                <p style="margin-top: 0.5rem; color: #d97706; font-weight: bold;" id="pending-modal-status">Status: Pending</p>
+                <p style="margin-top: 1rem; font-size: 0.95rem;" id="pending-modal-desc">Silakan lakukan pembayaran tunai di kasir untuk memproses pesanan Anda.</p>
+            </div>
+            <div id="pending-modal-loader" style="margin-top: 2rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; color: #6b7280;">
+                <i class='bx bx-loader-alt bx-spin' style="font-size: 1.5rem;"></i>
+                <span>Menunggu konfirmasi kasir...</span>
+            </div>
+        </div>
+    </div>
+
     <script type="text/javascript"
       src="{% if midtrans_is_production %}https://app.midtrans.com/snap/snap.js{% else %}https://app.sandbox.midtrans.com/snap/snap.js{% endif %}"
       data-client-key="{{ midtrans_client_key }}"></script>

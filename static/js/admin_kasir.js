@@ -201,8 +201,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(response => response.json())
         .then(data => {
             if(data.success) {
-                const finishOrder = () => {
-                    alert(`✅ Pesanan Berhasil Diproses!\nOrder ID: ${data.order_id}`);
+                alert(`✅ Pesanan Berhasil Diproses!\nOrder ID: ${data.order_id}`);
                     
                     // Update stock di DOM
                     cart.forEach(item => {
@@ -236,12 +235,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         onSuccess: function(result) { 
                             paymentHandled = true;
                             alert("Pembayaran berhasil!"); 
-                            window.location.reload(); 
+                            window.location.href = '/admin/kasir'; 
                         },
                         onPending: function(result) { 
                             paymentHandled = true;
                             alert("Pembayaran diproses (pending)."); 
-                            window.location.reload(); 
+                            window.location.href = '/admin/kasir'; 
                         },
                         onError: function(result) { 
                             paymentHandled = true;
@@ -269,7 +268,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 } else {
                     alert("Pesanan berhasil diproses!");
-                    window.location.reload();
+                    window.location.href = '/admin/kasir';
                 }
             } else {
                 alert(`❌ Gagal: ${data.message}`);

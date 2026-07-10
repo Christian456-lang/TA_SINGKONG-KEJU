@@ -751,6 +751,13 @@ def cancel_order():
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/order/status/<order_id>', methods=['GET'])
+def get_order_status(order_id):
+    order = Order.query.filter_by(order_id=order_id).first()
+    if not order:
+        return jsonify({"success": False, "message": "Pesanan tidak ditemukan"}), 404
+    return jsonify({"success": True, "status": order.status})
+
 @app.route('/api/orders/<order_id>', methods=['GET'])
 def get_order(order_id):
     if not session.get('role'):
