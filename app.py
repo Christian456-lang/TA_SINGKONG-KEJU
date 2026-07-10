@@ -539,7 +539,7 @@ def admin_dashboard():
     total_orders = Order.query.count()
     low_stock = Menu.query.filter(Menu.stock < 10).count()
     popular_products = Menu.query.order_by(Menu.reviews.desc()).limit(2).all()
-    recent_orders = Order.query.order_by(Order.date.desc()).limit(3).all()
+    recent_orders = Order.query.order_by(Order.id.desc()).limit(3).all()
     
     # Calculate sales for the last 7 days
     daily_sales = []
@@ -988,7 +988,7 @@ def admin_orders():
     if selected_status:
         query = query.filter(Order.status == selected_status)
         
-    orders = query.order_by(Order.date.desc()).all()
+    orders = query.order_by(Order.id.desc()).all()
     total_volume = sum([o.total_amount for o in orders if o.status == 'Completed'])
     total_orders = len(orders)
     
