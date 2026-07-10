@@ -454,13 +454,6 @@ def index():
     makanan_berat = Menu.query.filter_by(group='makanan_berat').all()
     makanan_ringan = Menu.query.filter_by(group='makanan_ringan').all()
     minuman = Menu.query.filter_by(group='minuman').all()
-    
-    # Fallback ke data statis jika database kosong (belum di-init)
-    if not unggulan and not makanan_berat and not makanan_ringan and not minuman:
-        unggulan = UNGGULAN
-        makanan_berat = MAKANAN_BERAT
-        makanan_ringan = MAKANAN_RINGAN
-        minuman = MINUMAN
         
     return render_template(
         'index.html',
@@ -472,15 +465,10 @@ def index():
         midtrans_is_production=os.getenv('MIDTRANS_IS_PRODUCTION', 'False').lower() == 'true'
     )
 
-@app.route('/api/init_db', methods=['GET'])
-def init_db():
+with app.app_context():
     try:
         db.create_all()
         
-        # Cek jika data sudah ada
-        if Menu.query.first():
-            return jsonify({"success": True, "message": "Database sudah diinisialisasi sebelumnya."})
-
         # Insert default admin jika belum ada
         if not Admin.query.filter_by(username='admin').first():
             # pyrefly: ignore [unexpected-keyword]
@@ -492,41 +480,40 @@ def init_db():
             default_kasir = Admin(username='kasir', password='kasir123', role='kasir')
             db.session.add(default_kasir)
 
-        def seed_data(data_list, group_name):
-            for item in data_list:
-                menu = Menu(
-                    # pyrefly: ignore [unexpected-keyword]
-                    name=item.get('name'),
-                    # pyrefly: ignore [unexpected-keyword]
-                    category=item.get('category'),
-                    # pyrefly: ignore [unexpected-keyword]
-                    description=item.get('description', ''),
-                    # pyrefly: ignore [unexpected-keyword]
-                    price=item.get('price'),
-                    # pyrefly: ignore [unexpected-keyword]
-                    rating=item.get('rating', 0.0),
-                    # pyrefly: ignore [unexpected-keyword]
-                    reviews=item.get('reviews', 0),
-                    # pyrefly: ignore [unexpected-keyword]
-                    image=item.get('image', ''),
-                    # pyrefly: ignore [unexpected-keyword]
-                    group=group_name,
-                    # pyrefly: ignore [unexpected-keyword]
-                    stock=random.randint(0, 150)
-                )
-                db.session.add(menu)
-                
-        seed_data(UNGGULAN, 'unggulan')
-        seed_data(MAKANAN_BERAT, 'makanan_berat')
-        seed_data(MAKANAN_RINGAN, 'makanan_ringan')
-        seed_data(MINUMAN, 'minuman')
+        # Cek jika data menu kosong, maka isi dengan data awal
+        if not Menu.query.first():
+            def seed_data(data_list, group_name):
+                for item in data_list:
+                    menu = Menu(
+                        # pyrefly: ignore [unexpected-keyword]
+                        name=item.get('name'),
+                        # pyrefly: ignore [unexpected-keyword]
+                        category=item.get('category'),
+                        # pyrefly: ignore [unexpected-keyword]
+                        description=item.get('description', ''),
+                        # pyrefly: ignore [unexpected-keyword]
+                        price=item.get('price'),
+                        # pyrefly: ignore [unexpected-keyword]
+                        rating=item.get('rating', 0.0),
+                        # pyrefly: ignore [unexpected-keyword]
+                        reviews=item.get('reviews', 0),
+                        # pyrefly: ignore [unexpected-keyword]
+                        image=item.get('image', ''),
+                        # pyrefly: ignore [unexpected-keyword]
+                        group=group_name,
+                        # pyrefly: ignore [unexpected-keyword]
+                        stock=random.randint(0, 150)
+                    )
+                    db.session.add(menu)
+                    
+            seed_data(UNGGULAN, 'unggulan')
+            seed_data(MAKANAN_BERAT, 'makanan_berat')
+            seed_data(MAKANAN_RINGAN, 'makanan_ringan')
+            seed_data(MINUMAN, 'minuman')
 
-        # Orders are seeded via seed_orders.py for realistic data
         db.session.commit()
-        return jsonify({"success": True, "message": "Berhasil membuat tabel dan memindahkan semua data menu ke database TiDB!"})
     except Exception as e:
-        db.session.rollback()
-        return jsonify({"success": False, "message": f"Gagal inisialisasi: {str(e)}"}), 500
+        print(f"Gagal inisialisasi database: {str(e)}")
 
 @app.route('/login')
 def login_page():
@@ -642,13 +629,20 @@ def api_checkout():
             order = Order.query.filter_by(order_id=order_id).first()
             if order:
                 order.status = 'Completed'
+                # Increment sales (reviews acts as sales count for popular products)
+                for item in items:
+                    menu = Menu.query.get(item['id'])
+                    if menu:
+                        menu.reviews += item['qty']
                 db.session.commit()
                 return jsonify({"success": True, "message": "Pesanan berhasil diselesaikan", "order_id": order_id})
 
-        # Kurangi stok jika ini pesanan baru
+        # Kurangi stok jika ini pesanan baru, dan tambah review jika langsung Completed
         for item in items:
             menu = Menu.query.get(item['id'])
             menu.stock -= item['qty']
+            if status_val == 'Completed':
+                menu.reviews += item['qty']
             
         # Buat Order Baru
         order_id = f"ORD-{datetime.now().strftime('%Y%m%d')}-{random.randint(1000, 9999)}"
@@ -1078,7 +1072,7 @@ def admin_report():
     selected_date = request.args.get('date')
     selected_month = request.args.get('month')
     
-    query_orders = Order.query
+    query_orders = Order.query.filter(Order.status == 'Completed')
     if selected_date:
         query_orders = query_orders.filter(db.func.date(Order.date) == selected_date)
     if selected_month:
@@ -1131,7 +1125,7 @@ def admin_report():
         db.func.count(Order.id).label('total_orders'),
         db.func.sum(Order.total_amount).label('lifetime_value'),
         db.func.max(Order.date).label('last_activity')
-    )
+    ).filter(Order.status == 'Completed')
     if selected_date:
         tables_query = tables_query.filter(db.func.date(Order.date) == selected_date)
     if selected_month:
