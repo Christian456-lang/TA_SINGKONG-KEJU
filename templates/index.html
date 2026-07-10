@@ -102,36 +102,23 @@
                 </div>
             </div>
 
-            <div class="product-grid">
+            <div class="horizontal-scroll-grid">
                 {% for product in unggulan %}
-                <div class="product-card">
+                <div class="horizontal-card">
                     <div class="product-image" style="background-image: url('{{ product.image }}')">
-                        <button class="btn-favorite"><i class='bx bx-heart'></i></button>
+                        <div class="badge-top"><i class='bx bxs-crown'></i> Paling laku</div>
                     </div>
                     <div class="product-info">
-                        <span class="product-category">{{ product.category }}</span>
                         <h3 class="product-name">{{ product.name }}</h3>
-                        <div class="product-rating">
-                            <div class="stars">
-                                <i class='bx bxs-star'></i>
-                                <i class='bx bxs-star'></i>
-                                <i class='bx bxs-star'></i>
-                                <i class='bx bxs-star'></i>
-                                <i class='bx bxs-star-half'></i>
-                            </div>
-                            <span class="reviews">({{ product.reviews }})</span>
-                        </div>
-                        <div class="product-footer">
-                            <span class="product-price">Rp {{ "{:,.0f}".format(product.price).replace(',', '.')
-                                }}</span>
-                            <div class="qty-control" data-id="{{ product.id }}" data-name="{{ product.name }}"
-                                data-price="{{ product.price }}" data-category="{{ product.category }}" data-stock="{{ product.stock }}">
-                                <button class="btn-buy"><i class='bx bx-cart-add'></i> Beli</button>
-                                <div class="qty-stepper" style="display:none;">
-                                    <button class="qty-btn qty-minus"><i class='bx bx-minus'></i></button>
-                                    <span class="qty-value">1</span>
-                                    <button class="qty-btn qty-plus"><i class='bx bx-plus'></i></button>
-                                </div>
+                        <span class="product-price">Rp {{ "{:,.0f}".format(product.price).replace(',', '.') }}</span>
+                        
+                        <div class="qty-control" data-id="{{ product.id }}" data-name="{{ product.name }}"
+                            data-price="{{ product.price }}" data-category="{{ product.category }}" data-stock="{{ product.stock }}">
+                            <button class="btn-buy btn-tambah">Tambah</button>
+                            <div class="qty-stepper" style="display:none; justify-content: center; margin-top: 5px;">
+                                <button class="qty-btn qty-minus"><i class='bx bx-minus'></i></button>
+                                <span class="qty-value">1</span>
+                                <button class="qty-btn qty-plus"><i class='bx bx-plus'></i></button>
                             </div>
                         </div>
                     </div>
@@ -151,27 +138,25 @@
                 </div>
             </div>
 
-            <div class="product-grid">
+            <div class="vertical-list-grid">
                 {% for product in makanan_berat %}
-                <div class="product-card">
-                    <div class="product-image" style="background-image: url('{{ product.image }}')">
-                        <button class="btn-favorite"><i class='bx bx-heart'></i></button>
-                    </div>
+                <div class="vertical-list-card">
                     <div class="product-info">
-                        <span class="product-category">{{ product.category }}</span>
                         <h3 class="product-name">{{ product.name }}</h3>
-                        <p class="product-desc">{{ product.description }}</p>
-                        <div class="product-footer">
-                            <span class="product-price">Rp {{ "{:,.0f}".format(product.price).replace(',', '.')
-                                }}</span>
-                            <div class="qty-control" data-id="{{ product.id }}" data-name="{{ product.name }}"
-                                data-price="{{ product.price }}" data-category="{{ product.category }}" data-stock="{{ product.stock }}">
-                                <button class="btn-buy"><i class='bx bx-cart-add'></i> Beli</button>
-                                <div class="qty-stepper" style="display:none;">
-                                    <button class="qty-btn qty-minus"><i class='bx bx-minus'></i></button>
-                                    <span class="qty-value">1</span>
-                                    <button class="qty-btn qty-plus"><i class='bx bx-plus'></i></button>
-                                </div>
+                        <div class="product-rating">
+                            <i class='bx bxs-star'></i> {{ product.rating }} ({{ product.reviews }}+)
+                        </div>
+                        <span class="product-price">Rp {{ "{:,.0f}".format(product.price).replace(',', '.') }}</span>
+                    </div>
+                    <div class="product-image-container">
+                        <div class="product-image" style="background-image: url('{{ product.image }}')"></div>
+                        <div class="qty-control" data-id="{{ product.id }}" data-name="{{ product.name }}"
+                            data-price="{{ product.price }}" data-category="{{ product.category }}" data-stock="{{ product.stock }}">
+                            <button class="btn-buy btn-tambah">Tambah</button>
+                            <div class="qty-stepper" style="display:none; justify-content: space-between; align-items: center; background: white; border: 1px solid var(--secondary-color); border-radius: 20px; padding: 2px 5px; width: 100%;">
+                                <button class="qty-btn qty-minus" style="padding: 2px; border: none; background: transparent; color: var(--secondary-color);"><i class='bx bx-minus'></i></button>
+                                <span class="qty-value" style="font-size: 0.8rem; font-weight: bold; color: #1f2937;">1</span>
+                                <button class="qty-btn qty-plus" style="padding: 2px; border: none; background: transparent; color: var(--secondary-color);"><i class='bx bx-plus'></i></button>
                             </div>
                         </div>
                     </div>
@@ -191,27 +176,25 @@
                 </div>
             </div>
 
-            <div class="product-grid">
+            <div class="vertical-list-grid">
                 {% for product in makanan_ringan %}
-                <div class="product-card">
-                    <div class="product-image" style="background-image: url('{{ product.image }}')">
-                        <button class="btn-favorite"><i class='bx bx-heart'></i></button>
-                    </div>
+                <div class="vertical-list-card">
                     <div class="product-info">
-                        <span class="product-category">{{ product.category }}</span>
                         <h3 class="product-name">{{ product.name }}</h3>
-                        <p class="product-desc">{{ product.description }}</p>
-                        <div class="product-footer">
-                            <span class="product-price">Rp {{ "{:,.0f}".format(product.price).replace(',', '.')
-                                }}</span>
-                            <div class="qty-control" data-id="{{ product.id }}" data-name="{{ product.name }}"
-                                data-price="{{ product.price }}" data-category="{{ product.category }}" data-stock="{{ product.stock }}">
-                                <button class="btn-buy"><i class='bx bx-cart-add'></i> Beli</button>
-                                <div class="qty-stepper" style="display:none;">
-                                    <button class="qty-btn qty-minus"><i class='bx bx-minus'></i></button>
-                                    <span class="qty-value">1</span>
-                                    <button class="qty-btn qty-plus"><i class='bx bx-plus'></i></button>
-                                </div>
+                        <div class="product-rating">
+                            <i class='bx bxs-star'></i> {{ product.rating }} ({{ product.reviews }}+)
+                        </div>
+                        <span class="product-price">Rp {{ "{:,.0f}".format(product.price).replace(',', '.') }}</span>
+                    </div>
+                    <div class="product-image-container">
+                        <div class="product-image" style="background-image: url('{{ product.image }}')"></div>
+                        <div class="qty-control" data-id="{{ product.id }}" data-name="{{ product.name }}"
+                            data-price="{{ product.price }}" data-category="{{ product.category }}" data-stock="{{ product.stock }}">
+                            <button class="btn-buy btn-tambah">Tambah</button>
+                            <div class="qty-stepper" style="display:none; justify-content: space-between; align-items: center; background: white; border: 1px solid var(--secondary-color); border-radius: 20px; padding: 2px 5px; width: 100%;">
+                                <button class="qty-btn qty-minus" style="padding: 2px; border: none; background: transparent; color: var(--secondary-color);"><i class='bx bx-minus'></i></button>
+                                <span class="qty-value" style="font-size: 0.8rem; font-weight: bold; color: #1f2937;">1</span>
+                                <button class="qty-btn qty-plus" style="padding: 2px; border: none; background: transparent; color: var(--secondary-color);"><i class='bx bx-plus'></i></button>
                             </div>
                         </div>
                     </div>
@@ -231,27 +214,25 @@
                 </div>
             </div>
 
-            <div class="product-grid">
+            <div class="vertical-list-grid">
                 {% for product in minuman %}
-                <div class="product-card">
-                    <div class="product-image" style="background-image: url('{{ product.image }}')">
-                        <button class="btn-favorite"><i class='bx bx-heart'></i></button>
-                    </div>
+                <div class="vertical-list-card">
                     <div class="product-info">
-                        <span class="product-category">{{ product.category }}</span>
                         <h3 class="product-name">{{ product.name }}</h3>
-                        <p class="product-desc">{{ product.description }}</p>
-                        <div class="product-footer">
-                            <span class="product-price">Rp {{ "{:,.0f}".format(product.price).replace(',', '.')
-                                }}</span>
-                            <div class="qty-control" data-id="{{ product.id }}" data-name="{{ product.name }}"
-                                data-price="{{ product.price }}" data-category="{{ product.category }}" data-stock="{{ product.stock }}">
-                                <button class="btn-buy"><i class='bx bx-cart-add'></i> Beli</button>
-                                <div class="qty-stepper" style="display:none;">
-                                    <button class="qty-btn qty-minus"><i class='bx bx-minus'></i></button>
-                                    <span class="qty-value">1</span>
-                                    <button class="qty-btn qty-plus"><i class='bx bx-plus'></i></button>
-                                </div>
+                        <div class="product-rating">
+                            <i class='bx bxs-star'></i> {{ product.rating }} ({{ product.reviews }}+)
+                        </div>
+                        <span class="product-price">Rp {{ "{:,.0f}".format(product.price).replace(',', '.') }}</span>
+                    </div>
+                    <div class="product-image-container">
+                        <div class="product-image" style="background-image: url('{{ product.image }}')"></div>
+                        <div class="qty-control" data-id="{{ product.id }}" data-name="{{ product.name }}"
+                            data-price="{{ product.price }}" data-category="{{ product.category }}" data-stock="{{ product.stock }}">
+                            <button class="btn-buy btn-tambah">Tambah</button>
+                            <div class="qty-stepper" style="display:none; justify-content: space-between; align-items: center; background: white; border: 1px solid var(--secondary-color); border-radius: 20px; padding: 2px 5px; width: 100%;">
+                                <button class="qty-btn qty-minus" style="padding: 2px; border: none; background: transparent; color: var(--secondary-color);"><i class='bx bx-minus'></i></button>
+                                <span class="qty-value" style="font-size: 0.8rem; font-weight: bold; color: #1f2937;">1</span>
+                                <button class="qty-btn qty-plus" style="padding: 2px; border: none; background: transparent; color: var(--secondary-color);"><i class='bx bx-plus'></i></button>
                             </div>
                         </div>
                     </div>
