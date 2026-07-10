@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Struk - {{ order.order_id }}</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap');
+        
+        body {
+            font-family: 'Courier Prime', 'Courier New', Courier, monospace;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .receipt {
+            background-color: white;
+            width: 300px; /* Thermal printer width */
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header h2 {
+            margin: 0 0 5px 0;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+        }
+
+        .header p {
+            margin: 2px 0;
+            font-size: 0.85rem;
+            color: #333;
+        }
+
+        .divider {
+            border-top: 1px dashed #000;
+            margin: 10px 0;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            margin: 3px 0;
+        }
+
+        .item-list {
+            margin: 15px 0;
+        }
+
+        .item {
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+        }
+
+        .item-name {
+            display: block;
+            font-weight: bold;
+        }
+
+        .item-details {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .totals {
+            margin-top: 15px;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            margin: 4px 0;
+        }
+
+        .total-row.grand-total {
+            font-size: 1rem;
+            font-weight: bold;
+            margin-top: 8px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.8rem;
+            color: #555;
+        }
+
+        @media print {
+            body {
+                background-color: white;
+                padding: 0;
+                margin: 0;
+            }
+            .receipt {
+                box-shadow: none;
+                width: 100%;
+                max-width: 300px;
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="receipt">
+        <div class="header">
+            <h2>SINGKONG KEJU D9</h2>
+            <p>Jl. Argowiyoto No.8A, Salatiga</p>
+            <p>Telp: (0298) 123456</p>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="info-row">
+            <span>No: {{ order.order_id }}</span>
+        </div>
+        <div class="info-row">
+            <span>Tgl: {{ order.date.strftime('%d/%m/%Y %H:%M') }}</span>
+        </div>
+        <div class="info-row">
+            <span>Kasir: {{ order.admin.username | capitalize if order.admin else 'Sistem' }}</span>
+        </div>
+        <div class="info-row">
+            <span>Meja: {{ order.table_number }} ({{ order.table_category }})</span>
+        </div>
+        {% if order.customer_name %}
+        <div class="info-row">
+            <span>Pelanggan: {{ order.customer_name }}</span>
+        </div>
+        {% endif %}
+
+        <div class="divider"></div>
+
+        <div class="item-list">
+            {% for item in order.items %}
+            <div class="item">
+                <span class="item-name">{{ item.menu.name if item.menu else 'Menu Terhapus' }}</span>
+                <div class="item-details">
+                    <span>{{ item.quantity }} x {{ item.price_per_unit | rupiah }}</span>
+                    <span>{{ (item.quantity * item.price_per_unit) | rupiah }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="totals">
+            <div class="total-row">
+                <span>Subtotal</span>
+                <span>{{ (order.total_amount / 1.1) | round | int | rupiah }}</span>
+            </div>
+            <div class="total-row">
+                <span>Pajak (10%)</span>
+                <span>{{ (order.total_amount - (order.total_amount / 1.1)) | round | int | rupiah }}</span>
+            </div>
+            <div class="divider"></div>
+            <div class="total-row grand-total">
+                <span>TOTAL</span>
+                <span>{{ order.total_amount | rupiah }}</span>
+            </div>
+            <div class="total-row">
+                <span>Pembayaran</span>
+                <span>{{ order.payment.name | upper if order.payment else 'TUNAI' }}</span>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="footer">
+            <p>Terima Kasih Atas Kunjungan Anda!</p>
+            <p>Layanan Pelanggan: 0812-3456-7890</p>
+        </div>
+    </div>
+
+    <script>
+        // Otomatis memicu dialog print saat halaman selesai dimuat
+        window.onload = function() {
+            window.print();
+        }
+    </script>
+</body>
+</html>

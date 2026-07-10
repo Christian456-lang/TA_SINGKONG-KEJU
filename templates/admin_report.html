@@ -13,7 +13,24 @@
     <div class="filter-actions orders-filters">
         <div class="filter-group">
             <label>Pilih Tanggal</label>
-            <input type="date" id="report-date-filter" class="form-control" style="padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-family: inherit; color: #4b5563; font-size: 0.9rem;" value="{{ selected_date }}">
+            <input type="date" id="report-date-filter" class="form-control"
+                style="padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-family: inherit; color: #4b5563; font-size: 0.9rem;"
+                value="{{ selected_date }}">
+        </div>
+        <div class="filter-group">
+            <label>Pilih Rentang</label>
+            <select id="report-range-filter" class="form-control"
+                style="padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-family: inherit; color: #4b5563; font-size: 0.9rem;">
+                <option value="">Semua Waktu</option>
+                <option value="7">7 Hari Terakhir</option>
+                <option value="14">14 Hari Terakhir</option>
+                <option value="30">30 Hari Terakhir</option>
+            </select>
+        </div>
+        <div class="filter-group" style="display: flex; align-items: flex-end;">
+            <button class="btn-export" onclick="exportPDF()"
+                style="padding: 8px 16px; border: none; border-radius: 8px; background: #3b82f6; color: white; cursor: pointer; font-family: inherit; font-size: 0.9rem; display: flex; align-items: center; gap: 5px; height: 37px;"><i
+                    class='bx bx-export'></i> Export Data</button>
         </div>
     </div>
 </div>
@@ -37,47 +54,50 @@
 
     <div class="kpi-card bg-brown text-white">
         <div class="kpi-label uppercase text-light">Bestseller</div>
-        <div class="kpi-value" style="font-size: 28px; font-family: var(--font-heading); margin: 10px 0;">{{ best_seller.name if best_seller else 'N/A' }}</div>
-        <div class="kpi-desc text-light"><i class='bx bx-star'></i> {{ best_seller.reviews if best_seller else 0 }} reviews</div>
+        <div class="kpi-value" style="font-size: 28px; font-family: var(--font-heading); margin: 10px 0;">{{
+            best_seller.name if best_seller else 'N/A' }}</div>
+        <div class="kpi-desc text-light"><i class='bx bx-star'></i> {{ best_seller.reviews if best_seller else 0 }}
+            reviews</div>
     </div>
 </div>
 
 <!-- Charts Row -->
 <div class="middle-grid report-charts">
-    
+
     <!-- Revenue Trend Chart Mockup -->
     <div class="chart-card report-chart">
         <div class="card-header">
             <h2>Revenue Trend</h2>
         </div>
-        <div class="line-chart-container" style="display: flex; align-items: flex-end; justify-content: space-between; padding: 20px 0;">
-            <!-- Real dynamic revenue trend requires time-series data. Displaying simple message. -->
-            <p style="color: #666; font-size: 14px; text-align: center; width: 100%;">Trend chart will populate as daily data grows.</p>
+        <div class="line-chart-container" style="padding: 10px 0;">
+            <canvas id="revenueChart" style="width: 100%; height: 250px;"></canvas>
         </div>
     </div>
 
     <!-- Product Performance -->
     <div class="popular-card perf-card">
         <h2>Product Performance</h2>
-        
+
         <div class="perf-list">
             {% if top_categories %}
-                {% for cat in top_categories %}
-                <div class="perf-item">
-                    <div class="perf-header">
-                        <span class="perf-name">{{ cat.name }}</span>
-                        <span class="perf-pct">{{ cat.pct }}%</span>
-                    </div>
-                    <div class="perf-bar-bg">
-                        <div class="perf-bar-fill" style="width: {{ cat.pct }}%;"></div>
-                    </div>
+            {% for cat in top_categories %}
+            <div class="perf-item">
+                <div class="perf-header">
+                    <span class="perf-name">{{ cat.name }}</span>
+                    <span class="perf-pct">{{ cat.pct }}%</span>
                 </div>
-                {% endfor %}
+                <div class="perf-bar-bg">
+                    <div class="perf-bar-fill" style="--pct: {{ cat.pct }}%; width: var(--pct);"></div>
+                </div>
+            </div>
+            {% endfor %}
             {% else %}
-                <div class="perf-item"><p>Belum ada data penjualan.</p></div>
+            <div class="perf-item">
+                <p>Belum ada data penjualan.</p>
+            </div>
             {% endif %}
         </div>
-        
+
         <div class="recommendation-box">
             <div class="rec-icon"><i class='bx bx-trending-up'></i></div>
             <div class="rec-content">
@@ -108,182 +128,193 @@
             </thead>
             <tbody>
                 {% if top_tables %}
-                    {% for table in top_tables %}
-                    <tr>
-                        <td>
-                            <div class="table-cell-info">
-                                <div class="table-avatar {% if table.table_category == 'VIP' %}bg-soft-red{% else %}bg-soft-gray{% endif %}">{{ table.table_number }}</div>
-                                <div>
-                                    <div class="table-name">Meja {{ table.table_number }}</div>
-                                    <div class="table-loc">{{ table.table_category }}</div>
-                                </div>
+                {% for table in top_tables %}
+                <tr>
+                    <td>
+                        <div class="table-cell-info">
+                            <div
+                                class="table-avatar {% if table.table_category == 'VIP' %}bg-soft-red{% else %}bg-soft-gray{% endif %}">
+                                {{ table.table_number }}</div>
+                            <div>
+                                <div class="table-name">Meja {{ table.table_number }}</div>
+                                <div class="table-loc">{{ table.table_category }}</div>
                             </div>
-                        </td>
-                        <td><span class="{% if table.table_category == 'VIP' %}vip-badge{% else %}regular-badge{% endif %}">{{ table.table_category }}</span></td>
-                        <td class="table-orders">{{ table.total_orders }}</td>
-                        <td class="table-value">{{ table.lifetime_value | rupiah }}</td>
-                        <td class="table-activity">{{ table.last_activity.strftime('%d %b, %H:%M') if table.last_activity else '-' }}</td>
-                    </tr>
-                    {% endfor %}
+                        </div>
+                    </td>
+                    <td><span
+                            class="{% if table.table_category == 'VIP' %}vip-badge{% else %}regular-badge{% endif %}">{{
+                            table.table_category }}</span></td>
+                    <td class="table-orders">{{ table.total_orders }}</td>
+                    <td class="table-value">{{ table.lifetime_value | rupiah }}</td>
+                    <td class="table-activity">{{ table.last_activity.strftime('%d %b, %H:%M') if table.last_activity
+                        else '-' }}</td>
+                </tr>
+                {% endfor %}
                 {% else %}
-                    <tr>
-                        <td colspan="5" style="text-align: center;">Belum ada data meja</td>
-                    </tr>
+                <tr>
+                    <td colspan="5" style="text-align: center;">Belum ada data meja</td>
+                </tr>
                 {% endif %}
             </tbody>
         </table>
     </div>
 </div>
 
-<div class="export-actions" style="margin-top: 20px;">
-    <button class="btn-export" onclick="showExportModal()"><i class='bx bx-export'></i> Export Data</button>
-</div>
 
-<!-- Export Modal -->
-<div id="exportModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
-    <div style="background: white; padding: 25px; border-radius: 8px; width: 400px; max-width: 90%; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
-        <h3 style="margin-top: 0; font-size: 1.2rem; color: #333;">Opsi Export Data</h3>
-        <p style="font-size: 0.9rem; color: #666; margin-bottom: 15px;">Pilih format dan rentang data yang ingin Anda unduh untuk laporan ini.</p>
-        
-        <div>
-            <label style="font-weight: bold; font-size: 0.9rem; color: #444;">Format File</label>
-            <select id="export-format" class="form-control" style="width: 100%; padding: 10px; margin-top: 5px; border-radius: 6px; border: 1px solid #ccc;">
-                <option value="pdf">PDF (Dokumen)</option>
-            </select>
-        </div>
-        
-        <div style="margin-top: 15px;">
-            <label style="font-weight: bold; font-size: 0.9rem; color: #444;">Pilih Rentang / Bulan</label>
-            <select id="export-range-type" class="form-control" style="width: 100%; padding: 10px; margin-top: 5px; border-radius: 6px; border: 1px solid #ccc;" onchange="toggleExportMonth(this.value)">
-                <option value="all">Semua Waktu</option>
-                <option value="7">7 Hari Terakhir</option>
-                <option value="14">14 Hari Terakhir</option>
-                <option value="21">21 Hari Terakhir</option>
-                <option value="28">28 Hari Terakhir</option>
-                <option value="month">Pilih Bulan Spesifik...</option>
-            </select>
-        </div>
-        <div id="export-month-container" style="margin-top: 15px; display: none;">
-            <label style="font-weight: bold; font-size: 0.9rem; color: #444;">Pilih Bulan</label>
-            <input type="month" id="export-month-input" class="form-control" style="width: 100%; padding: 10px; margin-top: 5px; border-radius: 6px; border: 1px solid #ccc;">
-        </div>
-        <div style="margin-top: 25px; display: flex; justify-content: flex-end; gap: 10px;">
-            <button onclick="closeExportModal()" style="padding: 8px 16px; border: 1px solid #ccc; border-radius: 6px; background: white; cursor: pointer; font-weight: bold; color: #555;">Batal</button>
-            <button onclick="processExport()" style="padding: 8px 16px; border: none; border-radius: 6px; background: #3b82f6; color: white; cursor: pointer; font-weight: bold;"><i class='bx bx-download'></i> Unduh</button>
-        </div>
-    </div>
-</div>
+
+
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const dateInput = document.getElementById('report-date-filter');
-    
-    function updateFilters() {
+    document.addEventListener('DOMContentLoaded', function () {
+        const dateInput = document.getElementById('report-date-filter');
+        const rangeInput = document.getElementById('report-range-filter');
+
+        // Set selected range if present in URL
         const urlParams = new URLSearchParams(window.location.search);
-        
-        if (dateInput && dateInput.value) {
-            urlParams.set('date', dateInput.value);
-        } else {
-            urlParams.delete('date');
+        if (rangeInput && urlParams.get('range')) {
+            rangeInput.value = urlParams.get('range');
         }
-        
-        window.location.href = window.location.pathname + '?' + urlParams.toString();
+
+        function updateFilters() {
+            const urlParams = new URLSearchParams(window.location.search);
+
+            if (dateInput && dateInput.value) {
+                urlParams.set('date', dateInput.value);
+                // If date is selected, clear range
+                urlParams.delete('range');
+            } else {
+                urlParams.delete('date');
+            }
+
+            if (rangeInput && rangeInput.value && (!dateInput || !dateInput.value)) {
+                urlParams.set('range', rangeInput.value);
+            } else if (rangeInput && !rangeInput.value) {
+                urlParams.delete('range');
+            }
+
+            window.location.href = window.location.pathname + '?' + urlParams.toString();
+        }
+
+        if (dateInput) {
+            dateInput.addEventListener('change', function () {
+                if (this.value) {
+                    if (rangeInput) rangeInput.value = '';
+                }
+                updateFilters();
+            });
+        }
+
+        if (rangeInput) {
+            rangeInput.addEventListener('change', function () {
+                if (this.value) {
+                    if (dateInput) dateInput.value = '';
+                }
+                updateFilters();
+            });
+        }
+    });
+
+
+
+    function exportPDF() {
+        var element = document.querySelector('.dashboard-body');
+
+        // Hide filters and export buttons temporarily
+        var filters = element.querySelector('.filter-actions');
+        var filtersDisplay = '';
+        if(filters) {
+            filtersDisplay = filters.style.display;
+            filters.style.display = 'none';
+        }
+
+        var opt = {
+            margin: 10,
+            filename: 'laporan_dashboard.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        html2pdf().set(opt).from(element).save().then(function() {
+            // Restore visibility
+            if(filters) filters.style.display = filtersDisplay;
+        });
     }
-    
-    if(dateInput) {
-        dateInput.addEventListener('change', updateFilters);
-    }
-    
-    const urlParams = new URLSearchParams(window.location.search);
-    if(urlParams.get('auto_export') === 'true') {
-        setTimeout(() => {
-            exportPDF();
-            urlParams.delete('auto_export');
-            const newurl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?' + urlParams.toString();
-            window.history.replaceState({path:newurl}, '', newurl);
-        }, 500);
-    }
-});
-
-function toggleExportMonth(val) {
-    if(val === 'month') {
-        document.getElementById('export-month-container').style.display = 'block';
-    } else {
-        document.getElementById('export-month-container').style.display = 'none';
-    }
-}
-
-function showExportModal() {
-    document.getElementById('exportModal').style.display = 'flex';
-}
-
-function closeExportModal() {
-    document.getElementById('exportModal').style.display = 'none';
-}
-
-function processExport() {
-    var format = document.getElementById('export-format').value;
-    var rangeType = document.getElementById('export-range-type').value;
-    var urlParams = new URLSearchParams(window.location.search);
-    
-    urlParams.delete('range');
-    urlParams.delete('month');
-    urlParams.delete('date');
-    
-    if(rangeType === 'month') {
-        var monthVal = document.getElementById('export-month-input').value;
-        if(monthVal) urlParams.set('month', monthVal);
-    } else if(rangeType !== 'all') {
-        urlParams.set('range', rangeType);
-    }
-    
-    // In report page, only PDF is supported currently
-    urlParams.set('auto_export', 'true');
-    window.location.href = window.location.pathname + '?' + urlParams.toString();
-}
-
-function exportPDF() {
-    var element = document.querySelector('.dashboard-body').cloneNode(true);
-    
-    // Remove export actions and filter headers from clone
-    var exports = element.querySelector('.export-actions');
-    if(exports) exports.remove();
-    var filters = element.querySelector('.filter-actions');
-    if(filters) filters.remove();
-    
-    var opt = {
-      margin:       10,
-      filename:     'laporan_dashboard.pdf',
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2, useCORS: true },
-      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-
-    html2pdf().set(opt).from(element).save();
-}
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script id="revenue-data" type="application/json">
+    {{ revenue_chart_data | safe }}
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const ctx = document.getElementById('revenueChart');
+        if (ctx) {
+            const rawData = JSON.parse(document.getElementById('revenue-data').textContent);
+            new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: rawData.labels,
+            datasets: [{
+                label: 'Total Pendapatan (Rp)',
+                data: rawData.values,
+                borderColor: '#8B4513',
+                backgroundColor: 'rgba(139, 69, 19, 0.1)',
+                borderWidth: 2,
+                tension: 0.3,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+        }
+    });
+</script>
 
 <style>
-@media print {
-    .sidebar, .top-header, .dashboard-header-row, .export-actions {
-        display: none !important;
+    @media print {
+
+        .sidebar,
+        .top-header,
+        .dashboard-header-row,
+        .export-actions {
+            display: none !important;
+        }
+
+        .main-content {
+            margin-left: 0 !important;
+        }
+
+        .dashboard-body {
+            padding: 0 !important;
+        }
+
+        body {
+            background-color: white !important;
+        }
+
+        .orders-card,
+        .chart-card,
+        .popular-card,
+        .kpi-card {
+            border: 1px solid #ddd !important;
+            box-shadow: none !important;
+            break-inside: avoid;
+        }
     }
-    .main-content {
-        margin-left: 0 !important;
-    }
-    .dashboard-body {
-        padding: 0 !important;
-    }
-    body {
-        background-color: white !important;
-    }
-    .orders-card, .chart-card, .popular-card, .kpi-card {
-        border: 1px solid #ddd !important;
-        box-shadow: none !important;
-        break-inside: avoid;
-    }
-}
 </style>
 {% endblock %}

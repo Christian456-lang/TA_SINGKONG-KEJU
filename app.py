@@ -3,6 +3,7 @@ from flask import Flask, render_template, request, jsonify, session, redirect, u
 from flask_sqlalchemy import SQLAlchemy
 from dotenv import load_dotenv
 from sqlalchemy import text
+from sqlalchemy.orm import joinedload
 from datetime import datetime, timedelta
 import random
 
@@ -54,15 +55,37 @@ class Menu(db.Model):
     stock = db.Column(db.Integer, default=100)
     updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
 
+class PaymentMethod(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), unique=True, nullable=False)
+    is_active = db.Column(db.Boolean, default=True)
+
 class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    order_id = db.Column(db.String(20), unique=True, nullable=False)
-    table_number = db.Column(db.String(10), nullable=False)
-    table_category = db.Column(db.String(20), nullable=False) # VIP, Regular
+    order_id = db.Column(db.String(50), unique=True, nullable=False)
+    customer_name = db.Column(db.String(100), nullable=True)
+    payment_method_id = db.Column(db.Integer, db.ForeignKey('payment_method.id'), nullable=True)
+    table_number = db.Column(db.String(20), nullable=False)
+    table_category = db.Column(db.String(50), nullable=False) # VIP, Regular
     date = db.Column(db.DateTime, nullable=False)
     total_amount = db.Column(db.Integer, nullable=False)
     status = db.Column(db.String(20), nullable=False) # Completed, Processed, Canceled, Pending
     product_summary = db.Column(db.String(255), nullable=False)
+    
+    admin_id = db.Column(db.Integer, db.ForeignKey('admin.id'), nullable=True)
+    admin = db.relationship('Admin')
+    
+    payment = db.relationship('PaymentMethod', backref='orders')
+    items = db.relationship('OrderItem', backref='order', lazy=True, cascade='all, delete-orphan')
+
+class OrderItem(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey('order.id'), nullable=False)
+    menu_id = db.Column(db.Integer, db.ForeignKey('menu.id'), nullable=False)
+    quantity = db.Column(db.Integer, nullable=False)
+    price_per_unit = db.Column(db.Integer, nullable=False)
+    
+    menu = db.relationship('Menu')
 
 class Admin(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -78,375 +101,7 @@ cloudinary.config(
     secure = True
 )
 
-# ── Menu Unggulan ──────────────────────────────────────────────
-UNGGULAN = [
-    {
-        "id": 101,
-        "name": "Singkong Keju D9",
-        "category": "OLAHAN SINGKONG",
-        "price": 25000,
-        "rating": 5.0,
-        "reviews": 1244,
-        "image": "https://placehold.co/300x250/fdfbf7/7a6353?text=Singkong+Keju"
-    },
-    {
-        "id": 102,
-        "name": "Getuk D9 Pelangi",
-        "category": "MANIS TRADISIONAL",
-        "price": 20000,
-        "rating": 4.9,
-        "reviews": 982,
-        "image": "https://placehold.co/300x250/fdfbf7/7a6353?text=Getuk+Pelangi"
-    },
-    {
-        "id": 103,
-        "name": "Kroket Singkong D9",
-        "category": "CEMILAN GURIH",
-        "price": 22000,
-        "rating": 4.8,
-        "reviews": 843,
-        "image": "https://placehold.co/300x250/fdfbf7/7a6353?text=Kroket+Singkong"
-    },
-    {
-        "id": 104,
-        "name": "Prol Tape Keju D9",
-        "category": "VARIAN TAPE",
-        "price": 35000,
-        "rating": 4.9,
-        "reviews": 528,
-        "image": "https://placehold.co/300x250/fdfbf7/7a6353?text=Prol+Tape"
-    },
-    {
-        "id": 105,
-        "name": "Timus Manis D9",
-        "category": "KUDAPAN SORE",
-        "price": 18000,
-        "rating": 4.7,
-        "reviews": 315,
-        "image": "https://placehold.co/300x250/fdfbf7/7a6353?text=Timus+Manis"
-    },
-    {
-        "id": 106,
-        "name": "Gemblong Cotot D9",
-        "category": "TRADISI SALATIGA",
-        "price": 20000,
-        "rating": 4.8,
-        "reviews": 526,
-        "image": "https://placehold.co/300x250/fdfbf7/7a6353?text=Gemblong+Cotot"
-    }
-]
-
-# ── Makanan Berat ──────────────────────────────────────────────
-MAKANAN_BERAT = [
-    {
-        "id": 1,
-        "name": "Bakmi Jawa Godog (Rebus)",
-        "category": "MAKANAN BERAT",
-        "description": "Mie rebus tradisional dengan kuah kaldu kentol dan rempah pilihan.",
-        "price": 22000,
-        "rating": 4.5,
-        "reviews": 320,
-        "image": "https://placehold.co/300x250/fdfbf7/7a6353?text=Bakmi+Godog"
-    },
-    {
-        "id": 2,
-        "name": "Bakmi Jawa Goreng",
-        "category": "MAKANAN BERAT",
-        "description": "Mie goreng khas Jawa dengan aroma smokey dan cita rasa manis gurih.",
-        "price": 22000,
-        "rating": 4.5,
-        "reviews": 285,
-        "image": "https://placehold.co/300x250/fdfbf7/7a6353?text=Bakmi+Goreng"
-    },
-    {
-        "id": 3,
-        "name": "Nasi Goreng Spesial",
-        "category": "FAVORIT",
-        "description": "Nasi goreng dengan telur, ayam, dan sayuran segar khas D9.",
-        "price": 25000,
-        "rating": 4.8,
-        "reviews": 510,
-        "image": "https://placehold.co/300x250/fdfbf7/7a6353?text=Nasgor+Spesial"
-    },
-    {
-        "id": 4,
-        "name": "Nasi Goreng Babat",
-        "category": "MAKANAN BERAT",
-        "description": "Nasi goreng gurih dengan potongan babat empuk bumbu rempah.",
-        "price": 28000,
-        "rating": 4.6,
-        "reviews": 198,
-        "image": "https://placehold.co/300x250/fdfbf7/7a6353?text=Nasgor+Babat"
-    },
-    {
-        "id": 5,
-        "name": "Nasi Pecel",
-        "category": "MENU TRADISIONAL",
-        "description": "Sayuran segar dengan siraman bumbu kacang gurih dan rempeyek renyah.",
-        "price": 18000,
-        "rating": 4.7,
-        "reviews": 425,
-        "image": "https://placehold.co/300x250/fdfbf7/7a6353?text=Nasi+Pecel"
-    },
-    {
-        "id": 6,
-        "name": "Nasi Ayam Goreng",
-        "category": "MAKANAN BERAT",
-        "description": "Ayam goreng bumbu lengkap dengan sambal kentol dan lalapan.",
-        "price": 25000,
-        "rating": 4.8,
-        "reviews": 480,
-        "image": "https://placehold.co/300x250/fdfbf7/7a6353?text=Nasi+Ayam+Goreng"
-    },
-    {
-        "id": 7,
-        "name": "Nasi Ayam Bakar",
-        "category": "MAKANAN BERAT",
-        "description": "Ayam bakar bumbu kecap meresap dengan aroma bakaran yang menggoda.",
-        "price": 26000,
-        "rating": 4.9,
-        "reviews": 390,
-        "image": "https://placehold.co/300x250/fdfbf7/7a6353?text=Nasi+Ayam+Bakar"
-    },
-    {
-        "id": 8,
-        "name": "Soto Ayam / Sop",
-        "category": "MENU SEGAR",
-        "description": "Soto ayam kuah bening segar dengan irisan dan rempah dan kuva gurih.",
-        "price": 20000,
-        "rating": 4.6,
-        "reviews": 310,
-        "image": "https://placehold.co/300x250/fdfbf7/7a6353?text=Soto+Ayam"
-    },
-]
-
-# ── Makanan Ringan ─────────────────────────────────────────────
-MAKANAN_RINGAN = [
-    {
-        "id": 9,
-        "name": "Singkong Keju Original",
-        "category": "OLAHAN TERLARIS",
-        "description": "Singkong goreng renyah dengan taburan keju yang melimpah.",
-        "price": 25000,
-        "rating": 5.0,
-        "reviews": 1244,
-        "image": "https://placehold.co/300x250/fdfbf7/7a6353?text=Singkong+Keju"
-    },
-    {
-        "id": 10,
-        "name": "Singkong Keju Cokelat / Meises",
-        "category": "MANIS TRADISIONAL",
-        "description": "Perpaduan gurihnya singkong dengan manisnya cokelat meises.",
-        "price": 25000,
-        "rating": 4.9,
-        "reviews": 982,
-        "image": "https://placehold.co/300x250/fdfbf7/7a6353?text=Singkong+Cokelat"
-    },
-    {
-        "id": 11,
-        "name": "Singkong Sambal Roa",
-        "category": "CAMILAN GURIH",
-        "description": "Singkong goreng khas D9 disajikan dengan sambal roa pedas mantap.",
-        "price": 22000,
-        "rating": 4.8,
-        "reviews": 843,
-        "image": "https://placehold.co/300x250/fdfbf7/7a6353?text=Singkong+Sambal"
-    },
-    {
-        "id": 12,
-        "name": "Tahu Serasi Goreng",
-        "category": "KHAS BANDUNGAN",
-        "description": "Tahu goreng khas Bandungan yang lembut dan gurih.",
-        "price": 18000,
-        "rating": 4.7,
-        "reviews": 315,
-        "image": "https://placehold.co/300x250/fdfbf7/7a6353?text=Tahu+Serasi"
-    },
-    {
-        "id": 13,
-        "name": "Tempe Mendoan",
-        "category": "GORENGAN FAVORIT",
-        "description": "Tempe goreng tepung setengah matang dengan irisan daun bawang.",
-        "price": 15000,
-        "rating": 4.6,
-        "reviews": 290,
-        "image": "https://placehold.co/300x250/fdfbf7/7a6353?text=Tempe+Mendoan"
-    },
-    {
-        "id": 14,
-        "name": "Pisang Goreng",
-        "category": "MANIS ALAMI",
-        "description": "Pisang goreng manis dengan pilihan topping keju atau cokelat.",
-        "price": 18000,
-        "rating": 4.7,
-        "reviews": 350,
-        "image": "https://placehold.co/300x250/fdfbf7/7a6353?text=Pisang+Goreng"
-    },
-    {
-        "id": 15,
-        "name": "Kroket Singkong",
-        "category": "CAMILAN GURIH",
-        "description": "Kroket lembut berbahan dasar singkong pilihan.",
-        "price": 20000,
-        "rating": 4.8,
-        "reviews": 526,
-        "image": "https://placehold.co/300x250/fdfbf7/7a6353?text=Kroket+Singkong"
-    },
-    {
-        "id": 16,
-        "name": "Tape Goreng",
-        "category": "MANIS LEGIT",
-        "description": "Tape singkong goreng yang manis dan legit.",
-        "price": 15000,
-        "rating": 4.5,
-        "reviews": 210,
-        "image": "https://placehold.co/300x250/fdfbf7/7a6353?text=Tape+Goreng"
-    },
-    {
-        "id": 17,
-        "name": "Getuk Goreng",
-        "category": "TRADISI SALATIGA",
-        "description": "Getuk singkong manis yang digoreng hingga renyah di luar.",
-        "price": 18000,
-        "rating": 4.8,
-        "reviews": 420,
-        "image": "https://placehold.co/300x250/fdfbf7/7a6353?text=Getuk+Goreng"
-    },
-    {
-        "id": 18,
-        "name": "Roti Bakar (Aneka Topping)",
-        "category": "CAMILAN POPULER",
-        "description": "Roti bakar hangat dengan berbagai pilihan topping toast.",
-        "price": 20000,
-        "rating": 4.6,
-        "reviews": 380,
-        "image": "https://placehold.co/300x250/fdfbf7/7a6353?text=Roti+Bakar"
-    },
-]
-
-# ── Minuman ────────────────────────────────────────────────────
-MINUMAN = [
-    {
-        "id": 19,
-        "name": "Teh Poci",
-        "category": "SEDUHAN TRADISIONAL",
-        "description": "Teh poci tradisional yang harum dan menyegarkan.",
-        "price": 13000,
-        "rating": 4.8,
-        "reviews": 860,
-        "image": "https://placehold.co/300x250/fdfbf7/7a6353?text=Teh+Poci"
-    },
-    {
-        "id": 20,
-        "name": "Es Teh Kampul",
-        "category": "SEGARNYA ALAMI",
-        "description": "Es teh segar dengan sensasi kampul yang khas.",
-        "price": 8000,
-        "rating": 4.7,
-        "reviews": 945,
-        "image": "https://placehold.co/300x250/fdfbf7/7a6353?text=Es+Teh+Kampul"
-    },
-    {
-        "id": 21,
-        "name": "Wedang Uwuh",
-        "category": "SEDUHAN ALAMI",
-        "description": "Wedang uwuh hangat dengan rempah-rempah tradisional.",
-        "price": 12000,
-        "rating": 4.9,
-        "reviews": 990,
-        "image": "https://placehold.co/300x250/fdfbf7/7a6353?text=Wedang+Uwuh"
-    },
-    {
-        "id": 22,
-        "name": "Wedang Jahe",
-        "category": "HANGAT MENYEHATKAN",
-        "description": "Wedang jahe hangat yang menyehatkan tubuh.",
-        "price": 10000,
-        "rating": 4.7,
-        "reviews": 710,
-        "image": "https://placehold.co/300x250/fdfbf7/7a6353?text=Wedang+Jahe"
-    },
-    {
-        "id": 23,
-        "name": "Wedang Ronde",
-        "category": "LEGENDA HANGAT",
-        "description": "Wedang ronde dengan isian kacang yang gurih.",
-        "price": 15000,
-        "rating": 4.8,
-        "reviews": 850,
-        "image": "https://placehold.co/300x250/fdfbf7/7a6353?text=Wedang+Ronde"
-    },
-    {
-        "id": 24,
-        "name": "Kopi Hitam Tubruk",
-        "category": "KOPI KLASIK",
-        "description": "Kopi hitam tubruk khas yang kuat dan nikmat.",
-        "price": 12000,
-        "rating": 4.6,
-        "reviews": 620,
-        "image": "https://placehold.co/300x250/fdfbf7/7a6353?text=Kopi+Tubruk"
-    },
-    {
-        "id": 25,
-        "name": "Kopi Susu",
-        "category": "LEMBUT & CREAMY",
-        "description": "Kopi susu lembut yang creamy dan nikmat.",
-        "price": 18000,
-        "rating": 4.9,
-        "reviews": 1050,
-        "image": "https://placehold.co/300x250/fdfbf7/7a6353?text=Kopi+Susu"
-    },
-    {
-        "id": 26,
-        "name": "Es Campur",
-        "category": "MINUMAN PALING SEGAR",
-        "description": "Es campur segar dengan aneka buah dan sirup.",
-        "price": 22000,
-        "rating": 4.8,
-        "reviews": 880,
-        "image": "https://placehold.co/300x250/fdfbf7/7a6353?text=Es+Campur"
-    },
-    {
-        "id": 27,
-        "name": "Es Teler",
-        "category": "FAVORIT NUSANTARA",
-        "description": "Es teler segar dengan alpukat, kelapa, dan nangka.",
-        "price": 25000,
-        "rating": 4.9,
-        "reviews": 730,
-        "image": "https://placehold.co/300x250/fdfbf7/7a6353?text=Es+Teler"
-    },
-    {
-        "id": 28,
-        "name": "Aneka Jus Buah",
-        "category": "FRESH & SEHAT",
-        "description": "Jus buah segar pilihan yang menyehatkan.",
-        "price": 15000,
-        "rating": 4.7,
-        "reviews": 480,
-        "image": "https://placehold.co/300x250/fdfbf7/7a6353?text=Jus+Buah"
-    },
-    {
-        "id": 29,
-        "name": "Lemon Tea (Panas / Es)",
-        "category": "SEGAR & SEHAT",
-        "description": "Lemon tea yang segar dan menyehatkan.",
-        "price": 10000,
-        "rating": 4.6,
-        "reviews": 390,
-        "image": "https://placehold.co/300x250/fdfbf7/7a6353?text=Lemon+Tea"
-    },
-    {
-        "id": 30,
-        "name": "Teh Manis / Tawar",
-        "category": "MINUMAN SEPANJANG",
-        "description": "Teh manis atau tawar hangat/dingin.",
-        "price": 5000,
-        "rating": 4.5,
-        "reviews": 1200,
-        "image": "https://placehold.co/300x250/fdfbf7/7a6353?text=Teh+Manis"
-    },
-]
+# Data awal menu telah dipindahkan ke database.sql dan diinisialisasi melalui TiDB / SQLite.
 
 @app.route('/')
 def index():
@@ -469,6 +124,14 @@ with app.app_context():
     try:
         db.create_all()
         
+        # Insert payment methods jika belum ada
+        if not PaymentMethod.query.first():
+            methods = ['Tunai', 'QRIS', 'Transfer']
+            for m in methods:
+                # pyrefly: ignore [unexpected-keyword]
+                db.session.add(PaymentMethod(name=m))
+            db.session.commit()
+            
         # Insert default admin jika belum ada
         if not Admin.query.filter_by(username='admin').first():
             # pyrefly: ignore [unexpected-keyword]
@@ -479,37 +142,6 @@ with app.app_context():
             # pyrefly: ignore [unexpected-keyword]
             default_kasir = Admin(username='kasir', password='kasir123', role='kasir')
             db.session.add(default_kasir)
-
-        # Cek jika data menu kosong, maka isi dengan data awal
-        if not Menu.query.first():
-            def seed_data(data_list, group_name):
-                for item in data_list:
-                    menu = Menu(
-                        # pyrefly: ignore [unexpected-keyword]
-                        name=item.get('name'),
-                        # pyrefly: ignore [unexpected-keyword]
-                        category=item.get('category'),
-                        # pyrefly: ignore [unexpected-keyword]
-                        description=item.get('description', ''),
-                        # pyrefly: ignore [unexpected-keyword]
-                        price=item.get('price'),
-                        # pyrefly: ignore [unexpected-keyword]
-                        rating=item.get('rating', 0.0),
-                        # pyrefly: ignore [unexpected-keyword]
-                        reviews=item.get('reviews', 0),
-                        # pyrefly: ignore [unexpected-keyword]
-                        image=item.get('image', ''),
-                        # pyrefly: ignore [unexpected-keyword]
-                        group=group_name,
-                        # pyrefly: ignore [unexpected-keyword]
-                        stock=random.randint(0, 150)
-                    )
-                    db.session.add(menu)
-                    
-            seed_data(UNGGULAN, 'unggulan')
-            seed_data(MAKANAN_BERAT, 'makanan_berat')
-            seed_data(MAKANAN_RINGAN, 'makanan_ringan')
-            seed_data(MINUMAN, 'minuman')
 
         db.session.commit()
     except Exception as e:
@@ -522,7 +154,7 @@ def login_page():
 @app.route('/logout')
 def logout():
     session.clear()
-    return redirect(url_for('login_page'))
+    return redirect(url_for('index'))
 
 @app.route('/admin')
 def admin_dashboard():
@@ -586,7 +218,7 @@ def admin_pending():
     if session.get('role') != 'kasir':
         return redirect(url_for('admin_dashboard'))
 
-    pending_orders = Order.query.filter_by(status='Pending').order_by(Order.date.asc()).all()
+    pending_orders = Order.query.options(joinedload(Order.admin), joinedload(Order.payment)).filter_by(status='Pending').order_by(Order.date.asc()).all()
     return render_template('admin_pending.html', pending_orders=pending_orders, active_page='pending')
 
 @app.route('/api/checkout', methods=['POST'])
@@ -594,6 +226,8 @@ def api_checkout():
     try:
         data = request.json
         table_number = data.get('table_number')
+        if not table_number or str(table_number).strip() == '':
+            table_number = 'Takeaway'
         items = data.get('items', [])
 
         if not items:
@@ -601,10 +235,14 @@ def api_checkout():
 
         total_amount = 0
         product_summary_parts = []
+        
+        # Batch fetch semua menu
+        menu_ids = [item['id'] for item in items]
+        menus_db = {m.id: m for m in Menu.query.filter(Menu.id.in_(menu_ids)).all()}
 
         # Validasi stok & kalkulasi total
         for item in items:
-            menu = Menu.query.get(item['id'])
+            menu = menus_db.get(item['id'])
             if not menu:
                 return jsonify({"success": False, "message": f"Menu ID {item['id']} tidak ditemukan"}), 404
             
@@ -619,53 +257,94 @@ def api_checkout():
         tax = round(total_amount * 0.1)
         grand_total = total_amount + tax
 
-        status_val = data.get('status', 'Completed')
-        if status_val == 'Pending' and data.get('payment_method') != 'tunai':
-            status_val = 'Completed'
+        status_val = data.get('status')
+        pm_name = data.get('payment_method', 'tunai')
+        
+        # Jika dari Kasir (tanpa status), tunai = Completed, digital = Pending
+        if not status_val:
+            if pm_name.lower() in ['qris', 'transfer']:
+                status_val = 'Pending'
+            else:
+                status_val = 'Completed'
             
+        pm = PaymentMethod.query.filter(db.func.lower(PaymentMethod.name) == pm_name.lower()).first()
+
         order_id = data.get('order_id')
         if order_id:
             # Selesaikan pesanan lama (stok sudah dipotong saat customer buat order)
             order = Order.query.filter_by(order_id=order_id).first()
             if order:
-                order.status = 'Completed'
-                # Increment sales (reviews acts as sales count for popular products)
-                for item in items:
-                    menu = Menu.query.get(item['id'])
-                    if menu:
-                        menu.reviews += item['qty']
+                if pm:
+                    order.payment_method_id = pm.id
+                    
+                # Catat siapa yang memproses transaksi ini
+                if session.get('role') in ['admin', 'kasir'] and session.get('admin_id'):
+                    order.admin_id = session.get('admin_id')
+                    
+                if pm_name.lower() in ['qris', 'transfer']:
+                    order.status = 'Pending'
+                else:
+                    order.status = 'Completed'
+                    # Increment sales (reviews acts as sales count for popular products)
+                    for item in items:
+                        menu = menus_db.get(item['id'])
+                        if menu:
+                            menu.reviews += item['qty']
                 db.session.commit()
-                return jsonify({"success": True, "message": "Pesanan berhasil diselesaikan", "order_id": order_id})
-
-        # Kurangi stok jika ini pesanan baru, dan tambah review jika langsung Completed
-        for item in items:
-            menu = Menu.query.get(item['id'])
-            menu.stock -= item['qty']
-            if status_val == 'Completed':
-                menu.reviews += item['qty']
+                
+                # Jika metode digital, tidak return di sini, kita generate snap_token di bawah
+                if pm_name.lower() not in ['qris', 'transfer']:
+                    return jsonify({"success": True, "message": "Pesanan berhasil diselesaikan", "order_id": order_id})
+        else:
+            for item in items:
+                menu = menus_db.get(item['id'])
+                if menu:
+                    menu.stock -= item['qty']
+                    if status_val == 'Completed':
+                        menu.reviews += item['qty']
+                
+            # Buat Order Baru
+            order_id = f"ORD-{datetime.now().strftime('%Y%m%d')}-{random.randint(1000, 9999)}"
+            new_order = Order(
+                # pyrefly: ignore [unexpected-keyword]
+                order_id=order_id,
+                # pyrefly: ignore [unexpected-keyword]
+                customer_name=data.get('customer_name'),
+                # pyrefly: ignore [unexpected-keyword]
+                payment_method_id=pm.id if pm else None,
+                # pyrefly: ignore [unexpected-keyword]
+                table_number=table_number,
+                # pyrefly: ignore [unexpected-keyword]
+                table_category="Regular",
+                # pyrefly: ignore [unexpected-keyword]
+                date=datetime.now(),
+                # pyrefly: ignore [unexpected-keyword]
+                total_amount=grand_total,
+                # pyrefly: ignore [unexpected-keyword]
+                status=status_val,
+                # pyrefly: ignore [unexpected-keyword]
+                product_summary=", ".join(product_summary_parts),
+                # pyrefly: ignore [unexpected-keyword]
+                admin_id=session.get('admin_id') if session.get('role') in ['admin', 'kasir'] else None
+            )
             
-        # Buat Order Baru
-        order_id = f"ORD-{datetime.now().strftime('%Y%m%d')}-{random.randint(1000, 9999)}"
-        new_order = Order(
-            # pyrefly: ignore [unexpected-keyword]
-            order_id=order_id,
-            # pyrefly: ignore [unexpected-keyword]
-            table_number=table_number,
-            # pyrefly: ignore [unexpected-keyword]
-            table_category="Regular",
-            # pyrefly: ignore [unexpected-keyword]
-            date=datetime.now(),
-            # pyrefly: ignore [unexpected-keyword]
-            total_amount=grand_total,
-            # pyrefly: ignore [unexpected-keyword]
-            status=status_val,
-            # pyrefly: ignore [unexpected-keyword]
-            product_summary=", ".join(product_summary_parts)
-        )
+            for item in items:
+                menu = menus_db.get(item['id'])
+                if menu:
+                    order_item = OrderItem(
+                        # pyrefly: ignore [unexpected-keyword]
+                        menu_id=menu.id,
+                        # pyrefly: ignore [unexpected-keyword]
+                        quantity=item['qty'],
+                        # pyrefly: ignore [unexpected-keyword]
+                        price_per_unit=menu.price
+                    )
+                    new_order.items.append(order_item)
+            
+            db.session.add(new_order)
+            db.session.commit()
         
-        db.session.add(new_order)
-        db.session.commit()
-        
+        # --- BLOK INI AKAN DIJALANKAN OLEH PESANAN BARU MAUPUN LAMA JIKA MEMILIH QRIS ---
         snap_token = None
         if data.get('payment_method') in ['qris', 'transfer']:
             try:
@@ -711,16 +390,42 @@ def midtrans_webhook():
         
         order = Order.query.filter_by(order_id=order_id).first()
         if order:
-            if transaction_status in ['capture', 'settlement']:
+            if transaction_status in ['capture', 'settlement'] and order.status != 'Completed':
                 order.status = 'Completed'
-            elif transaction_status in ['cancel', 'deny', 'expire']:
+                for item in order.items:
+                    if item.menu:
+                        item.menu.reviews += item.quantity
+            elif transaction_status in ['cancel', 'deny', 'expire'] and order.status != 'Canceled':
                 order.status = 'Canceled'
+                for item in order.items:
+                    if item.menu:
+                        item.menu.stock += item.quantity
             elif transaction_status == 'pending':
                 order.status = 'Pending'
             db.session.commit()
             
         return jsonify({"status": "ok"})
     except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/success_order', methods=['POST'])
+def success_order():
+    try:
+        data = request.json
+        order_id = data.get('order_id')
+        
+        order = Order.query.filter_by(order_id=order_id).first()
+        if order and order.status != 'Completed':
+            order.status = 'Completed'
+            # Increment sales
+            for item in order.items:
+                if item.menu:
+                    item.menu.reviews += item.quantity
+            db.session.commit()
+            return jsonify({"success": True})
+        return jsonify({"success": False})
+    except Exception as e:
+        db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/cancel_order', methods=['POST'])
@@ -971,7 +676,7 @@ def admin_orders():
     selected_range = request.args.get('range')
     selected_month = request.args.get('month')
     
-    query = Order.query
+    query = Order.query.options(joinedload(Order.admin), joinedload(Order.payment))
     if selected_date:
         query = query.filter(db.func.date(Order.date) == selected_date)
     if selected_month:
@@ -1009,6 +714,17 @@ def admin_orders():
                            selected_month=selected_month or '',
                            selected_range=selected_range or '',
                            selected_status=selected_status or '')
+
+@app.route('/admin/receipt/<order_id>')
+def print_receipt(order_id):
+    if not session.get('username') or session.get('role') not in ['admin', 'kasir']:
+        return redirect(url_for('login_page'))
+    
+    order = Order.query.filter_by(order_id=order_id).first()
+    if not order:
+        return "Order not found", 404
+        
+    return render_template('receipt.html', order=order)
 
 @app.route('/admin/orders/export/csv')
 def export_orders_csv():
@@ -1071,43 +787,46 @@ def admin_report():
 
     selected_date = request.args.get('date')
     selected_month = request.args.get('month')
+    selected_range = request.args.get('range')
     
     query_orders = Order.query.filter(Order.status == 'Completed')
+    total_revenue_query = db.session.query(db.func.sum(Order.total_amount)).filter(Order.status == 'Completed')
+    
     if selected_date:
         query_orders = query_orders.filter(db.func.date(Order.date) == selected_date)
-    if selected_month:
-        query_orders = query_orders.filter(db.func.strftime('%Y-%m', Order.date) == selected_month)
-        
-    total_revenue_query = db.session.query(db.func.sum(Order.total_amount)).filter(Order.status == 'Completed')
-    if selected_date:
         total_revenue_query = total_revenue_query.filter(db.func.date(Order.date) == selected_date)
     if selected_month:
+        query_orders = query_orders.filter(db.func.strftime('%Y-%m', Order.date) == selected_month)
         total_revenue_query = total_revenue_query.filter(db.func.strftime('%Y-%m', Order.date) == selected_month)
+    if selected_range:
+        try:
+            days = int(selected_range)
+            start_date = datetime.now() - timedelta(days=days)
+            query_orders = query_orders.filter(Order.date >= start_date)
+            total_revenue_query = total_revenue_query.filter(Order.date >= start_date)
+        except ValueError:
+            pass
+            
     total_revenue = total_revenue_query.scalar() or 0
     
     orders_count = query_orders.count()
     best_seller = Menu.query.order_by(Menu.reviews.desc()).first()
     
-    # Calculate Product Performance by parsing Order.product_summary
+    # Calculate Product Performance using OrderItem
     from collections import defaultdict
     category_sales = defaultdict(int)
-    all_orders = query_orders.all()
-    menus = {m.name: m.category for m in Menu.query.all()}
-    
     total_items_sold = 0
-    for order in all_orders:
-        parts = order.product_summary.split(',')
-        for part in parts:
-            part = part.strip()
-            if 'x ' in part:
-                try:
-                    qty_str, name = part.split('x ', 1)
-                    qty = int(qty_str)
-                    category = menus.get(name, 'Lainnya')
-                    category_sales[category] += qty
-                    total_items_sold += qty
-                except:
-                    pass
+    
+    # Query all completed orders in the filtered range
+    order_ids = [o.id for o in query_orders.all()]
+    
+    if order_ids:
+        # Get all items for these orders joined with Menu to get group
+        items = db.session.query(OrderItem, Menu.group).join(Menu).filter(OrderItem.order_id.in_(order_ids)).all()
+        for item, menu_group in items:
+            group_name = menu_group.replace('_', ' ').title()
+            category_sales[group_name] += item.quantity
+            total_items_sold += item.quantity
                     
     # Sort categories by sales
     sorted_cats = sorted(category_sales.items(), key=lambda x: x[1], reverse=True)
@@ -1133,6 +852,59 @@ def admin_report():
         
     tables = tables_query.group_by(Order.table_number, Order.table_category).order_by(db.text('total_orders DESC')).limit(4).all()
     
+    import json
+    import calendar
+    
+    end_date_trend = datetime.now()
+    days_to_show = 7
+    
+    if selected_range:
+        try:
+            days_to_show = int(selected_range)
+        except ValueError:
+            pass
+    elif selected_date:
+        try:
+            end_date_trend = datetime.strptime(selected_date, '%Y-%m-%d')
+            end_date_trend = end_date_trend.replace(hour=23, minute=59, second=59)
+        except ValueError:
+            pass
+    elif selected_month:
+        try:
+            year, month = map(int, selected_month.split('-'))
+            _, last_day = calendar.monthrange(year, month)
+            end_date_trend = datetime(year, month, last_day, 23, 59, 59)
+            days_to_show = last_day
+        except ValueError:
+            pass
+            
+    start_date_trend = end_date_trend - timedelta(days=days_to_show - 1)
+    start_date_trend = start_date_trend.replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    daily_revenue_query = db.session.query(
+        db.func.date(Order.date).label('day'),
+        db.func.sum(Order.total_amount).label('revenue')
+    ).filter(
+        Order.status == 'Completed',
+        Order.date >= start_date_trend,
+        Order.date <= end_date_trend
+    ).group_by(db.func.date(Order.date)).all()
+    
+    revenue_data_dict = {str(row.day): int(row.revenue) for row in daily_revenue_query if row.day}
+    
+    revenue_labels = []
+    revenue_values = []
+    for i in range(days_to_show):
+        d = (start_date_trend + timedelta(days=i)).date()
+        label = d.strftime('%d %b')
+        revenue_labels.append(label)
+        revenue_values.append(revenue_data_dict.get(str(d), 0))
+        
+    revenue_chart_data = json.dumps({
+        'labels': revenue_labels,
+        'values': revenue_values
+    })
+    
     return render_template('admin_report.html',
                            total_revenue=total_revenue,
                            orders_count=orders_count,
@@ -1140,6 +912,7 @@ def admin_report():
                            top_categories=top_categories,
                            recommended_focus=recommended_focus,
                            top_tables=tables,
+                           revenue_chart_data=revenue_chart_data,
                            selected_date=selected_date or '',
                            selected_month=selected_month or '')
 
@@ -1153,6 +926,7 @@ def login():
     if admin and admin.password == password:
         session['username'] = admin.username
         session['role'] = admin.role
+        session['admin_id'] = admin.id
         return jsonify({"success": True, "message": "Login successful!"})
     else:
         return jsonify({"success": False, "message": "Username atau password salah."}), 401

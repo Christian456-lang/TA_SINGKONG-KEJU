@@ -23,7 +23,10 @@
                 <div class="table-number">{{ order.table_number }}</div>
                 <div class="table-info">
                     <div class="table-title">Meja {{ order.table_number }}</div>
-                    <div class="order-id">Order {{ order.order_id }} &bull; {{ order.date.strftime('%H:%M') }}</div>
+                    <div class="order-id">
+                        Order {{ order.order_id }} &bull; {{ order.date.strftime('%H:%M') }}<br>
+                        <small style="color:#78716c;">{{ order.customer_name or 'Pelanggan' }} ({{ (order.payment.name if order.payment else 'Tunai') | upper }})</small>
+                    </div>
                 </div>
                 <div class="status-badges">
                     <span class="badge badge-kitchen">KITCHEN</span>

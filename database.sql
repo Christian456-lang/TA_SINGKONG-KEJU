@@ -8,7 +8,9 @@ CREATE TABLE IF NOT EXISTS menu (
     reviews INT DEFAULT 0,
     image VARCHAR(255) NOT NULL,
     `group` VARCHAR(50) NOT NULL,
-    stock INT DEFAULT 100
+    stock INT DEFAULT 100,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 TRUNCATE TABLE menu;
@@ -24,15 +26,38 @@ CREATE TABLE IF NOT EXISTS admin (
 INSERT IGNORE INTO admin (username, password, role) VALUES ('admin', 'admin123', 'admin');
 INSERT IGNORE INTO admin (username, password, role) VALUES ('kasir', 'kasir123', 'kasir');
 
+CREATE TABLE IF NOT EXISTS payment_method (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE,
+    is_active BOOLEAN DEFAULT TRUE
+);
+
+INSERT IGNORE INTO payment_method (name) VALUES ('Tunai'), ('QRIS'), ('Transfer');
+
 CREATE TABLE IF NOT EXISTS `order` (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    order_id VARCHAR(20) NOT NULL UNIQUE,
-    table_number VARCHAR(10) NOT NULL,
-    table_category VARCHAR(20) NOT NULL,
+    order_id VARCHAR(50) NOT NULL UNIQUE,
+    customer_name VARCHAR(100),
+    payment_method_id INT,
+    table_number VARCHAR(20) NOT NULL,
+    table_category VARCHAR(50) NOT NULL,
     date DATETIME NOT NULL,
     total_amount INT NOT NULL,
     status VARCHAR(20) NOT NULL,
-    product_summary VARCHAR(255) NOT NULL
+    product_summary VARCHAR(255) NOT NULL,
+    admin_id INT,
+    FOREIGN KEY (payment_method_id) REFERENCES payment_method(id) ON DELETE SET NULL,
+    FOREIGN KEY (admin_id) REFERENCES admin(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS order_item (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT NOT NULL,
+    menu_id INT NOT NULL,
+    quantity INT NOT NULL,
+    price_per_unit INT NOT NULL,
+    FOREIGN KEY (order_id) REFERENCES `order`(id) ON DELETE CASCADE,
+    FOREIGN KEY (menu_id) REFERENCES menu(id) ON DELETE CASCADE
 );
 
 INSERT INTO menu (name, category, description, price, rating, reviews, image, `group`, stock) VALUES ('Singkong Keju D9', 'OLAHAN SINGKONG', '', 25000, 5.0, 1244, 'https://placehold.co/300x250/fdfbf7/7a6353?text=Singkong+Keju', 'unggulan', 100);

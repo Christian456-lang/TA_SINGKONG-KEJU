@@ -168,11 +168,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const customerName = document.getElementById('pos-customer').value.trim();
         const paymentMethod = document.querySelector('.pay-btn.active').dataset.method;
         
-        if (!tableNumber) {
-            alert('Mohon isi nomor meja kustomer!');
-            document.getElementById('pos-table').focus();
-            return;
-        }
+        // Table number is now optional
+        // if (!tableNumber) {
+        //     alert('Mohon isi nomor meja kustomer!');
+        //     document.getElementById('pos-table').focus();
+        //     return;
+        // }
         if (!customerName && !loadedOrderId) {
             alert('Mohon isi nama kustomer!');
             document.getElementById('pos-customer').focus();
@@ -234,8 +235,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     window.snap.pay(data.snap_token, {
                         onSuccess: function(result) { 
                             paymentHandled = true;
-                            alert("Pembayaran berhasil!"); 
-                            window.location.href = '/admin/kasir'; 
+                            fetch('/api/success_order', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ order_id: data.order_id })
+                            }).then(() => {
+                                alert("Pembayaran berhasil!"); 
+                                window.location.href = '/admin/kasir'; 
+                            });
                         },
                         onPending: function(result) { 
                             paymentHandled = true;

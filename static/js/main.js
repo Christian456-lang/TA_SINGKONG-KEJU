@@ -669,8 +669,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     window.snap.pay(data.snap_token, {
                         onSuccess: function(result) { 
                             paymentHandled = true;
-                            alert("✅ Pesanan berhasil diproses!"); 
-                            window.location.reload(); 
+                            fetch('/api/success_order', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ order_id: data.order_id })
+                            }).then(() => {
+                                alert("✅ Pesanan berhasil diproses!"); 
+                                window.location.reload(); 
+                            });
                         },
                         onPending: function(result) { 
                             paymentHandled = true;

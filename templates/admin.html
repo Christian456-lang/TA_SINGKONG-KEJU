@@ -109,6 +109,8 @@
                 <tr>
                     <th>Order ID</th>
                     <th>Nomor Meja</th>
+                    <th>Pelanggan</th>
+                    <th>Pembayaran</th>
                     <th>Product</th>
                     <th>Date</th>
                     <th>Amount</th>
@@ -122,6 +124,8 @@
                     <tr>
                         <td class="order-id">{{ order.order_id }}</td>
                         <td><span class="badge-meja {% if order.table_category == 'VIP' %}soft-red{% else %}soft-gray{% endif %}"><i class='bx bx-restaurant'></i> Meja {{ order.table_number }}</span></td>
+                        <td>{{ order.customer_name or '-' }}</td>
+                        <td><span class="badge-payment">{{ (order.payment.name if order.payment else 'Tunai') | upper }}</span></td>
                         <td>{{ order.product_summary }}</td>
                         <td class="order-date">{{ order.date.strftime('%d %b, %H:%M') }}</td>
                         <td class="order-amount">{{ order.total_amount | rupiah }}</td>
@@ -131,7 +135,7 @@
                     {% endfor %}
                 {% else %}
                     <tr>
-                        <td colspan="7" style="text-align: center;">Belum ada pesanan</td>
+                        <td colspan="9" style="text-align: center;">Belum ada pesanan</td>
                     </tr>
                 {% endif %}
             </tbody>

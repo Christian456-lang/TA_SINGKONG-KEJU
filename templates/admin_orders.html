@@ -25,6 +25,9 @@
                 <option value="Pending" {% if selected_status == 'Pending' %}selected{% endif %}>Pending</option>
             </select>
         </div>
+        <div class="filter-group" style="display: flex; align-items: flex-end;">
+            <button class="btn-export" onclick="showExportModal()" style="padding: 8px 16px; border: none; border-radius: 8px; background: #3b82f6; color: white; cursor: pointer; font-family: inherit; font-size: 0.9rem; display: flex; align-items: center; gap: 5px; height: 37px;"><i class='bx bx-export'></i> Export Data</button>
+        </div>
     </div>
 </div>
 
@@ -62,6 +65,9 @@
                 <tr>
                     <th>Order ID</th>
                     <th>Nomor Meja</th>
+                    <th>Pelanggan</th>
+                    <th>Pembayaran</th>
+                    <th>Kasir</th>
                     <th>Date</th>
                     <th>Product</th>
                     <th>Total Amount</th>
@@ -75,6 +81,9 @@
                     <tr>
                         <td class="order-id">{{ order.order_id }}</td>
                         <td><span class="badge-meja {% if order.table_category == 'VIP' %}soft-red{% else %}soft-gray{% endif %}"><i class='bx bx-restaurant'></i> Meja {{ order.table_number }}</span></td>
+                        <td>{{ order.customer_name or '-' }}</td>
+                        <td><span class="badge-payment">{{ (order.payment.name if order.payment else 'Tunai') | upper }}</span></td>
+                        <td><span style="font-weight: 500; color: #4b5563;"><i class='bx bx-user' style="margin-right:4px;"></i>{{ order.admin.username | capitalize if order.admin else '-' }}</span></td>
                         <td class="order-date-full">{{ order.date.strftime('%b %d, %Y %H:%M') }}</td>
                         <td>{{ order.product_summary }}</td>
                         <td class="order-amount">{{ order.total_amount | rupiah }}</td>
@@ -89,12 +98,16 @@
                             <span class="status-badge"><span class="dot"></span> {{ order.status }}</span>
                             {% endif %}
                         </td>
-                        <td class="print-hide"><a href="#" class="view-details-btn">View Details</a></td>
+                        <td class="print-hide">
+                            <a href="/admin/receipt/{{ order.order_id }}" target="_blank" class="view-details-btn" style="background-color: #4b5563; color: white; display: inline-flex; align-items: center; gap: 5px;">
+                                <i class='bx bx-printer'></i> Cetak
+                            </a>
+                        </td>
                     </tr>
                     {% endfor %}
                 {% else %}
                     <tr>
-                        <td colspan="7" style="text-align: center;">Belum ada pesanan</td>
+                        <td colspan="9" style="text-align: center;">Belum ada pesanan</td>
                     </tr>
                 {% endif %}
             </tbody>
@@ -103,9 +116,7 @@
 
 </div>
 
-<div class="export-actions">
-    <button class="btn-export" onclick="showExportModal()"><i class='bx bx-export'></i> Export Data</button>
-</div>
+<!-- Export Actions Moved to Top -->
 
 <!-- Export Modal -->
 <div id="exportModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
