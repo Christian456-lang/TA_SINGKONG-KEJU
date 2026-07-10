@@ -1511,6 +1511,19 @@ h1, h2, h3 {
     .navbar .nav-actions .cart-icon {
         display: none; /* Hide top cart */
     }
+    
+    .navbar {
+        padding: 15px 20px;
+    }
+    
+    .search-bar {
+        display: none; /* Hide search bar on mobile, rely on bottom nav */
+    }
+
+    .categories {
+        padding: 0 15px;
+        margin: 40px auto;
+    }
 
     .bottom-nav {
         display: grid;
