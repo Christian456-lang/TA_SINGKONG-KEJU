@@ -1517,7 +1517,12 @@ h1, h2, h3 {
     }
     
     .search-bar {
-        display: none; /* Hide search bar on mobile, rely on bottom nav */
+        padding: 6px 10px;
+    }
+
+    .search-bar input {
+        width: 100px;
+        font-size: 12px;
     }
 
     .categories {
