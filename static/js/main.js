@@ -674,8 +674,24 @@ document.addEventListener('DOMContentLoaded', () => {
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ order_id: data.order_id })
                             }).then(() => {
-                                alert("✅ Pesanan berhasil diproses!"); 
-                                window.location.reload(); 
+                                const modal = document.getElementById('pending-payment-modal');
+                                if(modal) {
+                                    modal.classList.add('active');
+                                    modal.style.display = 'flex';
+                                    document.getElementById('pending-modal-icon').innerHTML = "<i class='bx bx-check-circle' style='font-size: 4rem; color: #16a34a;'></i>";
+                                    document.getElementById('pending-modal-title').innerText = "Pembayaran Berhasil!";
+                                    document.getElementById('pending-modal-status').innerText = "Status: Completed";
+                                    document.getElementById('pending-modal-status').style.color = "#16a34a";
+                                    document.getElementById('pending-modal-desc').innerText = `Nama: ${nama} | Meja: ${meja} | Total: ${formatRp(total)}\nPesanan Anda sedang diproses ke dapur.`;
+                                    document.getElementById('pending-modal-loader').style.display = "none";
+                                    
+                                    setTimeout(() => {
+                                        window.location.reload();
+                                    }, 3500);
+                                } else {
+                                    alert(`✅ Pesanan berhasil!\n\nNama: ${nama}\nMeja: ${meja}\nMetode: QRIS\nTotal: ${formatRp(total)}\n\nPesanan Anda sedang diproses ke dapur.`);
+                                    window.location.reload();
+                                }
                             });
                         },
                         onPending: function(result) { 
