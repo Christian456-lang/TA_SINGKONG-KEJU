@@ -11,7 +11,16 @@
         <p>Monitor your daily operations and performance metrics.</p>
     </div>
     <div class="filter-actions">
-        <button class="btn-outline"><i class='bx bx-calendar'></i> Last 24 Hours</button>
+        <input type="date" id="dashboard-date" class="form-control" style="padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 8px; color: #4b5563; font-size: 0.9rem;" value="{{ selected_date or '' }}">
+        <script>
+            document.getElementById('dashboard-date').addEventListener('change', function() {
+                if (this.value) {
+                    window.location.href = '?date=' + this.value;
+                } else {
+                    window.location.href = window.location.pathname;
+                }
+            });
+        </script>
         <button class="btn-filled"><i class='bx bx-filter-alt'></i> Filters</button>
     </div>
 </div>

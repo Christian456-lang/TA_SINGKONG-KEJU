@@ -163,7 +163,14 @@ def admin_dashboard():
     if session.get('role') != 'admin':
         return redirect(url_for('admin_kasir'))
 
-    today = datetime.now().date()
+    selected_date = request.args.get('date')
+    if selected_date:
+        try:
+            today = datetime.strptime(selected_date, '%Y-%m-%d').date()
+        except ValueError:
+            today = datetime.now().date()
+    else:
+        today = datetime.now().date()
     # Total sales today
     today_orders = Order.query.filter(db.func.date(Order.date) == today).all()
     total_sales_today = sum([o.total_amount for o in today_orders if o.status == 'Completed'])
@@ -199,7 +206,8 @@ def admin_dashboard():
                            low_stock=low_stock,
                            popular_products=popular_products,
                            recent_orders=recent_orders,
-                           daily_sales=daily_sales)
+                           daily_sales=daily_sales,
+                           selected_date=selected_date)
 @app.route('/admin/kasir')
 def admin_kasir():
     if not session.get('username'):
@@ -221,6 +229,23 @@ def admin_pending():
     pending_orders = Order.query.options(joinedload(Order.admin), joinedload(Order.payment)).filter_by(status='Pending').order_by(Order.date.asc()).all()
     return render_template('admin_pending.html', pending_orders=pending_orders, active_page='pending')
 
+@app.route('/api/pending_updates')
+def api_pending_updates():
+    if not session.get('username') or session.get('role') != 'kasir':
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    # Just return count and latest order ID for lightweight polling
+    pending_orders = Order.query.filter_by(status='Pending').order_by(Order.date.desc()).all()
+    
+    # Also sum total pending amount to detect if amounts change
+    total_amount = sum(o.total_amount for o in pending_orders)
+    
+    return jsonify({
+        'count': len(pending_orders),
+        'last_order_id': pending_orders[0].order_id if pending_orders else None,
+        'total_amount': total_amount
+    })
+
 @app.route('/api/checkout', methods=['POST'])
 def api_checkout():
     try:
@@ -232,6 +257,13 @@ def api_checkout():
 
         if not items:
             return jsonify({"success": False, "message": "Keranjang kosong"}), 400
+
+        # Cast all item IDs to integers to prevent dictionary lookup failures (string vs int keys)
+        for item in items:
+            try:
+                item['id'] = int(item['id'])
+            except (ValueError, TypeError):
+                return jsonify({"success": False, "message": "Format ID Menu tidak valid"}), 400
 
         total_amount = 0
         product_summary_parts = []

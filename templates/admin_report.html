@@ -22,6 +22,7 @@
             <select id="report-range-filter" class="form-control"
                 style="padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-family: inherit; color: #4b5563; font-size: 0.9rem;">
                 <option value="">Semua Waktu</option>
+                <option value="1">24 Jam Terakhir</option>
                 <option value="7">7 Hari Terakhir</option>
                 <option value="14">14 Hari Terakhir</option>
                 <option value="30">30 Hari Terakhir</option>
@@ -232,7 +233,7 @@
             filename: 'laporan_dashboard.pdf',
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2, useCORS: true },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
         };
 
         html2pdf().set(opt).from(element).save().then(function() {
