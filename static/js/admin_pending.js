@@ -72,6 +72,6 @@ document.addEventListener('DOMContentLoaded', () => {
             .catch(err => console.error('Error checking pending updates:', err));
     }
 
-    // Poll every 5 seconds (optimized for deployment to check lightly)
-    setInterval(checkPendingUpdates, 5000);
+    // Poll every 3 seconds (optimized for deployment to check lightly)
+    setInterval(checkPendingUpdates, 3000);
 });

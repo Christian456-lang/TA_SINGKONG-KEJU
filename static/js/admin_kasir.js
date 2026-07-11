@@ -300,8 +300,8 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(data => {
                 if (data.success && data.order) {
                     loadedOrderId = data.order.order_id;
-                    document.getElementById('pos-table').value = data.order.table_number;
-                    // Note: customer_name is not saved in Order right now so we leave it empty
+                    document.getElementById('pos-table').value = data.order.table_number || '';
+                    document.getElementById('pos-customer').value = data.order.customer_name || '';
                     
                     data.order.items.forEach(item => {
                         cart.push({

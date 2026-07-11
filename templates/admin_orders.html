@@ -44,7 +44,7 @@
         <div class="kpi-label">Completed</div>
         <div class="kpi-value">{{ completed }}</div>
         <div class="progress-bar-container">
-            <div class="progress-bar fill-success" style="width: {{ completed_pct }}%;"></div>
+            <div class="progress-bar fill-success" {{ 'style="width: ' ~ completed_pct ~ '%;"' | safe }}></div>
         </div>
     </div>
 
@@ -52,7 +52,7 @@
         <div class="kpi-label">Pending</div>
         <div class="kpi-value">{{ pending }}</div>
         <div class="progress-bar-container">
-            <div class="progress-bar fill-warning" style="width: {{ pending_pct }}%;"></div>
+            <div class="progress-bar fill-warning" {{ 'style="width: ' ~ pending_pct ~ '%;"' | safe }}></div>
         </div>
     </div>
 </div>
@@ -263,6 +263,63 @@ function exportPDF() {
 
     html2pdf().set(opt).from(wrapper).save();
 }
+
+// ─── Real-time Auto-Update Logic ────────────────────────────────────
+let lastOrderId = null;
+let orderCount = null;
+let totalAmount = null;
+
+function checkOrderUpdates() {
+    // Append current URL params to API so filters are respected
+    fetch('/api/orders_updates' + window.location.search)
+        .then(res => {
+            if (!res.ok) throw new Error('Network error');
+            return res.json();
+        })
+        .then(data => {
+            if (data.error) return;
+
+            if (lastOrderId === null && orderCount === null) {
+                // First run: just initialize state
+                lastOrderId = data.last_order_id;
+                orderCount = data.count;
+                totalAmount = data.total_amount;
+            } else if (lastOrderId !== data.last_order_id || orderCount !== data.count || totalAmount !== data.total_amount) {
+                // Changes detected! Fetch the latest HTML without full page refresh
+                fetch(window.location.href)
+                    .then(res => res.text())
+                    .then(html => {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+                        
+                        const newTable = doc.querySelector('.orders-table');
+                        const currentTable = document.querySelector('.orders-table');
+                        
+                        if (newTable && currentTable) {
+                            currentTable.innerHTML = newTable.innerHTML;
+                        }
+                        
+                        const newKpi = doc.querySelector('.orders-kpi');
+                        const currentKpi = document.querySelector('.orders-kpi');
+                        
+                        if (newKpi && currentKpi) {
+                            currentKpi.innerHTML = newKpi.innerHTML;
+                        }
+                        
+                        // Update state
+                        lastOrderId = data.last_order_id;
+                        orderCount = data.count;
+                        totalAmount = data.total_amount;
+                    })
+                    .catch(err => console.error('Error fetching new orders HTML:', err));
+            }
+        })
+        .catch(err => console.error('Error checking order updates:', err));
+}
+
+// Poll every 3 seconds (optimized for deployment to check lightly)
+setInterval(checkOrderUpdates, 3000);
+
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>

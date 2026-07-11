@@ -88,7 +88,7 @@
                     <span class="perf-pct">{{ cat.pct }}%</span>
                 </div>
                 <div class="perf-bar-bg">
-                    <div class="perf-bar-fill" style="--pct: {{ cat.pct }}%; width: var(--pct);"></div>
+                    <div class="perf-bar-fill" {{ 'style="--pct: ' ~ cat.pct ~ '%; width: var(--pct);"' | safe }}></div>
                 </div>
             </div>
             {% endfor %}

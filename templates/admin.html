@@ -85,7 +85,8 @@
             {% if popular_products %}
                 {% for item in popular_products %}
                 <div class="popular-item">
-                    <div class="item-img" style="background-image: url('{{ item.image if item.image.startswith('http') else url_for('static', filename='img/' + item.image) }}');"></div>
+                {% set bg_url = item.image if item.image.startswith('http') else url_for('static', filename='img/' ~ item.image) %}
+                <div class="item-img" style="background-image: url('{{ bg_url }}');"></div>
                     <div class="item-details">
                         <div class="item-name">{{ item.name }}</div>
                         <div class="item-sub">Popular Item</div>

@@ -520,6 +520,7 @@ def get_order(order_id):
         "order": {
             "order_id": order.order_id,
             "table_number": order.table_number,
+            "customer_name": order.customer_name,
             "total_amount": order.total_amount,
             "items": items
         }
@@ -746,6 +747,42 @@ def admin_orders():
                            selected_month=selected_month or '',
                            selected_range=selected_range or '',
                            selected_status=selected_status or '')
+
+@app.route('/api/orders_updates')
+def api_orders_updates():
+    if not session.get('username') or session.get('role') not in ['admin', 'kasir']:
+        return jsonify({'error': 'Unauthorized'}), 401
+        
+    selected_date = request.args.get('date')
+    selected_status = request.args.get('status')
+    selected_range = request.args.get('range')
+    selected_month = request.args.get('month')
+    
+    query = Order.query
+    if selected_date:
+        query = query.filter(db.func.date(Order.date) == selected_date)
+    if selected_month:
+        query = query.filter(db.func.strftime('%Y-%m', Order.date) == selected_month)
+    if selected_range:
+        try:
+            from datetime import datetime, timedelta
+            days = int(selected_range)
+            start_date = datetime.now() - timedelta(days=days)
+            query = query.filter(Order.date >= start_date)
+        except ValueError:
+            pass
+            
+    if selected_status:
+        query = query.filter(Order.status == selected_status)
+        
+    orders = query.order_by(Order.id.desc()).all()
+    total_amount = sum(o.total_amount for o in orders)
+    
+    return jsonify({
+        'count': len(orders),
+        'last_order_id': orders[0].order_id if orders else None,
+        'total_amount': total_amount
+    })
 
 @app.route('/admin/receipt/<order_id>')
 def print_receipt(order_id):
