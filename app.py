@@ -6,7 +6,8 @@ from sqlalchemy import text
 from sqlalchemy.orm import joinedload
 from datetime import datetime, timedelta
 import random
-
+# pyrefly: ignore [missing-import]
+from flask_bcrypt import Bcrypt
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
@@ -35,6 +36,7 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'pool_recycle': 280
 }
 db = SQLAlchemy(app)
+bcrypt = Bcrypt(app)
 
 # Custom Jinja filter for Rupiah
 @app.template_filter('rupiah')
@@ -135,12 +137,12 @@ with app.app_context():
         # Insert default admin jika belum ada
         if not Admin.query.filter_by(username='admin').first():
             # pyrefly: ignore [unexpected-keyword]
-            default_admin = Admin(username='admin', password='admin123', role='admin')
+            default_admin = Admin(username='admin', password=bcrypt.generate_password_hash('admin123').decode('utf-8'), role='admin')
             db.session.add(default_admin)
             
         if not Admin.query.filter_by(username='kasir').first():
             # pyrefly: ignore [unexpected-keyword]
-            default_kasir = Admin(username='kasir', password='kasir123', role='kasir')
+            default_kasir = Admin(username='kasir', password=bcrypt.generate_password_hash('kasir123').decode('utf-8'), role='kasir')
             db.session.add(default_kasir)
 
         db.session.commit()
@@ -992,7 +994,7 @@ def login():
     password = data.get('password')
     
     admin = Admin.query.filter_by(username=username).first()
-    if admin and admin.password == password:
+    if admin and bcrypt.check_password_hash(admin.password, password):
         session['username'] = admin.username
         session['role'] = admin.role
         session['admin_id'] = admin.id

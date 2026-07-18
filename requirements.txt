@@ -7,3 +7,4 @@ Flask-SQLAlchemy
 PyMySQL
 cryptography
 midtransclient
+Flask-Bcrypt

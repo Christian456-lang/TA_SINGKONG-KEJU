@@ -15,5 +15,6 @@
         "Tersedia",
         "tidb",
         "unggulan"
-    ]
+    ],
+    "liveServer.settings.port": 5501
 }

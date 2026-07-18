@@ -1,5 +1,5 @@
 import os
-from app import app, db, Admin
+from app import app, db, Admin, bcrypt
 
 with app.app_context():
     print("Dropping Admin table...")
@@ -9,8 +9,8 @@ with app.app_context():
     Admin.__table__.create(db.engine, checkfirst=True)
     
     print("Inserting default users...")
-    admin = Admin(username='admin', password='admin123', role='admin')
-    kasir = Admin(username='kasir', password='kasir123', role='kasir')
+    admin = Admin(username='admin', password=bcrypt.generate_password_hash('admin123').decode('utf-8'), role='admin')
+    kasir = Admin(username='kasir', password=bcrypt.generate_password_hash('kasir123').decode('utf-8'), role='kasir')
     
     db.session.add(admin)
     db.session.add(kasir)

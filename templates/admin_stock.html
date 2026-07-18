@@ -150,6 +150,19 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 
+<script id="menu-data" type="application/json">
+    [
+        {% for menu in menus %}
+        [
+            "PROD-{{ '%03d' % menu.id }}",
+            {{ menu.name|tojson }},
+            "{{ menu.group.replace('_', ' ').title() }}",
+            "{{ menu.stock }}",
+            "{{ 'Habis' if menu.stock == 0 else ('Stok Rendah' if menu.stock < 10 else 'Tersedia') }}"
+        ]{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ]
+</script>
 <script>
 function exportPDF() {
     const { jsPDF } = window.jspdf;
@@ -162,17 +175,7 @@ function exportPDF() {
     doc.setTextColor(100);
     doc.text("Tanggal: " + new Date().toLocaleDateString('id-ID'), 14, 28);
     
-    const tableData = [
-        {% for menu in menus %}
-        [
-            "PROD-{{ '%03d' % menu.id }}",
-            {{ menu.name|tojson }},
-            "{{ menu.group.replace('_', ' ').title() }}",
-            "{{ menu.stock }}",
-            "{{ 'Habis' if menu.stock == 0 else ('Stok Rendah' if menu.stock < 10 else 'Tersedia') }}"
-        ],
-        {% endfor %}
-    ];
+    const tableData = JSON.parse(document.getElementById('menu-data').textContent);
     
     doc.autoTable({
         startY: 35,
